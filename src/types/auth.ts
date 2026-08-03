@@ -1,3 +1,5 @@
+export type AuthProvider = 'google' | 'github' | 'microsoft';
+
 export interface User {
   id: string;
   name: string;

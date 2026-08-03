@@ -6,6 +6,8 @@ import type { AuthSession, LoginCredentials, RegisterDetails } from '../types/au
 export interface AuthService {
   login(credentials: LoginCredentials): Promise<AuthSession>;
   register(details: RegisterDetails): Promise<AuthSession>;
+  loginWithProvider(provider: AuthProvider): Promise<AuthSession>;
+  registerWithProvider(provider: AuthProvider): Promise<AuthSession>;
   logout(): Promise<void>;
   getSession(): Promise<AuthSession | null>;
 }
