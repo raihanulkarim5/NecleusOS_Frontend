@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { useLogout, useSession } from './hooks/useAuth';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { AppShell, NavKey } from './components/AppShell';
 import './styles/galaxy.css';
 
 export function App() {
   const { data: session, isLoading } = useSession();
   const logout = useLogout();
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [activeTab, setActiveTab] = useState<NavKey>('dashboard');
 
   if (isLoading) return null;
 
@@ -19,16 +22,14 @@ export function App() {
     );
   }
 
-  // Placeholder authenticated view — the Dashboard module replaces this next.
   return (
-    <div className="auth-stage">
-      <div className="auth-card">
-        <h1>Signed in</h1>
-        <p className="sub">Welcome, {session.user.name}</p>
-        <button className="auth-submit" onClick={() => logout.mutate()}>
-          Sign out
-        </button>
-      </div>
-    </div>
+    <AppShell active={activeTab} onNavigate={setActiveTab} onSignOut={() => logout.mutate()}>
+      {activeTab === 'dashboard' && <DashboardPage />}
+      {activeTab !== 'dashboard' && (
+        <p className="muted-text">
+          {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} module coming up next in the build order.
+        </p>
+      )}
+    </AppShell>
   );
 }
