@@ -4,6 +4,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EntriesPage } from './pages/EntriesPage';
+import { TasksPage } from './pages/TasksPage';
 import { AppShell, NavKey } from './components/AppShell';
 import './styles/galaxy.css';
 
@@ -27,7 +28,8 @@ export function App() {
     <AppShell active={activeTab} onNavigate={setActiveTab} onSignOut={() => logout.mutate()}>
       {activeTab === 'dashboard' && <DashboardPage />}
       {activeTab === 'entries' && <EntriesPage />}
-      {activeTab !== 'dashboard' && activeTab !== 'entries' && (
+      {activeTab === 'tasks' && <TasksPage />}
+      {activeTab !== 'dashboard' && activeTab !== 'entries' && activeTab !== 'tasks' && (
         <p className="muted-text">
           {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} module coming up next in the build order.
         </p>
