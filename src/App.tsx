@@ -3,6 +3,7 @@ import { useLogout, useSession } from './hooks/useAuth';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { EntriesPage } from './pages/EntriesPage';
 import { AppShell, NavKey } from './components/AppShell';
 import './styles/galaxy.css';
 
@@ -25,7 +26,8 @@ export function App() {
   return (
     <AppShell active={activeTab} onNavigate={setActiveTab} onSignOut={() => logout.mutate()}>
       {activeTab === 'dashboard' && <DashboardPage />}
-      {activeTab !== 'dashboard' && (
+      {activeTab === 'entries' && <EntriesPage />}
+      {activeTab !== 'dashboard' && activeTab !== 'entries' && (
         <p className="muted-text">
           {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} module coming up next in the build order.
         </p>

@@ -4,6 +4,7 @@ import { Logo } from './Logo';
 
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard' },
+  { key: 'entries', label: 'Entries' },
   { key: 'tasks', label: 'Tasks' },
   { key: 'journal', label: 'Journal' },
   { key: 'finance', label: 'Finance' },
