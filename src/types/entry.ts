@@ -1,10 +1,20 @@
+// Entries covers the general-purpose, free-form record types. Task and
+// Journal have distinct enough shapes (checklists/due dates vs. mood/
+// gratitude) that they're their own modules with their own types —
+// see src/types/task.ts and src/types/journal.ts (added when those
+// modules are built). Everything still connects via shared Links (below).
+import type { LinkRef } from './link';
+
+// Entries covers the general-purpose, free-form record types. Task and
+// Journal have distinct enough shapes (checklists/due dates vs. mood/
+// gratitude) that they're their own modules with their own types —
+// see src/types/task.ts and src/types/journal.ts (added when those
+// modules are built). Everything still connects via shared Links (below).
 export type EntryType =
-  | 'Task'
   | 'Note'
   | 'Idea'
   | 'Problem'
   | 'Solution'
-  | 'Journal'
   | 'Reminder'
   | 'Reference'
   | 'Decision'
@@ -12,11 +22,6 @@ export type EntryType =
 
 export type EntryStatus = 'Open' | 'In Progress' | 'Done' | 'Archived';
 export type EntryPriority = 'Low' | 'Medium' | 'High';
-
-export interface EntryLink {
-  entryId: string;
-  title: string;
-}
 
 export interface Entry {
   id: string;
@@ -27,7 +32,7 @@ export interface Entry {
   priority: EntryPriority;
   tags: string[];
   dueDate: string | null;
-  links: EntryLink[];
+  links: LinkRef[];
   createdAt: string;
   updatedAt: string;
   favorite: boolean;

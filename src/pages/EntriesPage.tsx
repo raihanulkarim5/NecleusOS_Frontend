@@ -3,7 +3,7 @@ import { useCreateEntry, useEntries, useToggleFavorite, useUpdateEntryStatus } f
 import type { Entry, EntryStatus, EntryType } from '../types/entry';
 
 const TYPES: EntryType[] = [
-  'Task', 'Note', 'Idea', 'Problem', 'Solution', 'Journal', 'Reminder', 'Reference', 'Decision', 'Meeting Note',
+  'Note', 'Idea', 'Problem', 'Solution', 'Reminder', 'Reference', 'Decision', 'Meeting Note',
 ];
 const STATUSES: EntryStatus[] = ['Open', 'In Progress', 'Done', 'Archived'];
 const STATUS_CYCLE: Record<EntryStatus, EntryStatus> = {
