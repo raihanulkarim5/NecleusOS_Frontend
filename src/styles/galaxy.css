@@ -885,3 +885,137 @@ body {
   font-size: 11px;
   color: var(--cyan);
 }
+
+/* Journal module */
+.journal-composer {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 18px;
+  backdrop-filter: blur(10px);
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.journal-composer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.journal-composer select {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.journal-composer textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.journal-composer textarea:focus { border-color: var(--violet); }
+
+.journal-composer-lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.journal-composer-lists input {
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 13px;
+  outline: none;
+}
+
+.journal-composer button {
+  align-self: flex-start;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--violet), var(--magenta));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.journal-composer button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.mood-picker { display: flex; gap: 5px; }
+
+.mood-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.mood-dot.active { background: linear-gradient(135deg, var(--cyan), var(--violet)); border-color: transparent; }
+.mood-picker.readonly .mood-dot { width: 8px; height: 8px; cursor: default; }
+
+.journal-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.journal-entry {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.journal-entry-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.journal-date { font-size: 12px; color: var(--muted); }
+
+.journal-lists {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.journal-list-row { font-size: 13px; color: var(--muted); }
+
+.journal-list-label {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-right: 8px;
+}
+
+.journal-list-label.wins { background: rgba(47, 82, 51, 0.35); color: #6FCF7C; }
+.journal-list-label.learnings { background: rgba(56, 189, 248, 0.16); color: var(--cyan); }
+.journal-list-label.gratitude { background: rgba(217, 70, 168, 0.16); color: var(--magenta); }

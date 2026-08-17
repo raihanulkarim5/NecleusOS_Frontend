@@ -5,6 +5,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EntriesPage } from './pages/EntriesPage';
 import { TasksPage } from './pages/TasksPage';
+import { JournalPage } from './pages/JournalPage';
 import { AppShell, NavKey } from './components/AppShell';
 import './styles/galaxy.css';
 
@@ -29,7 +30,8 @@ export function App() {
       {activeTab === 'dashboard' && <DashboardPage />}
       {activeTab === 'entries' && <EntriesPage />}
       {activeTab === 'tasks' && <TasksPage />}
-      {activeTab !== 'dashboard' && activeTab !== 'entries' && activeTab !== 'tasks' && (
+      {activeTab === 'journal' && <JournalPage />}
+      {activeTab !== 'dashboard' && activeTab !== 'entries' && activeTab !== 'tasks' && activeTab !== 'journal' && (
         <p className="muted-text">
           {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} module coming up next in the build order.
         </p>
