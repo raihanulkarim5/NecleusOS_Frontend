@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { StarfieldBackground } from './StarfieldBackground';
-import { NecleusLogo } from './NecleusLogo';
+import { Logo } from './Logo';
 
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard' },
@@ -34,7 +34,7 @@ export function AppShell({ active, onNavigate, onSignOut, children }: AppShellPr
 
       <header className="shell-nav">
         <div className="shell-logo">
-          <NecleusLogo size={24} />
+          <Logo />
         </div>
 
         <nav className="shell-tabs">

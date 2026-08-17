@@ -1,5 +1,5 @@
 import type { AuthService } from './authService';
-import type { AuthSession, LoginCredentials, RegisterDetails } from '../types/auth';
+import type { AuthProvider, AuthSession, LoginCredentials, RegisterDetails } from '../types/auth';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const SESSION_KEY = 'personal-os-mock-session';
@@ -8,12 +8,28 @@ function fakeToken() {
   return `mock-token-${Math.random().toString(36).slice(2)}`;
 }
 
+function providerName(provider: AuthProvider) {
+  if (provider === 'google') return 'Google';
+  if (provider === 'github') return 'GitHub';
+  return 'Microsoft';
+}
+
+function createProviderSession(provider: AuthProvider): AuthSession {
+  const normalized = providerName(provider);
+  return {
+    user: {
+      id: `user-${provider}`,
+      name: `${normalized} user`,
+      email: `${provider}@example.com`,
+    },
+    token: fakeToken(),
+  };
+}
+
 export const mockAuthService: AuthService = {
   async login(credentials: LoginCredentials): Promise<AuthSession> {
     await delay(500);
 
-    // Any email/password works in mock mode, so the UI can be exercised
-    // freely before a real API exists.
     const session: AuthSession = {
       user: {
         id: 'user-1',
@@ -33,6 +49,20 @@ export const mockAuthService: AuthService = {
       user: { id: 'user-1', name: details.name, email: details.email },
       token: fakeToken(),
     };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    return session;
+  },
+
+  async loginWithProvider(provider: AuthProvider): Promise<AuthSession> {
+    await delay(500);
+    const session = createProviderSession(provider);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    return session;
+  },
+
+  async registerWithProvider(provider: AuthProvider): Promise<AuthSession> {
+    await delay(500);
+    const session = createProviderSession(provider);
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     return session;
   },
