@@ -1019,3 +1019,59 @@ body {
 .journal-list-label.wins { background: rgba(47, 82, 51, 0.35); color: #6FCF7C; }
 .journal-list-label.learnings { background: rgba(56, 189, 248, 0.16); color: var(--cyan); }
 .journal-list-label.gratitude { background: rgba(217, 70, 168, 0.16); color: var(--magenta); }
+
+/* Finance module */
+.account-masked {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+  letter-spacing: 0.05em;
+}
+
+.budget-row { padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+.budget-row:last-child { border-bottom: none; }
+
+.budget-row-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.budget-cat { font-weight: 500; }
+.budget-amounts { color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+
+.expense-quickadd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.expense-quickadd input,
+.expense-quickadd select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 13px;
+  outline: none;
+}
+
+.expense-quickadd input[type="number"] { width: 110px; }
+.expense-quickadd input[type="text"] { flex: 1; min-width: 140px; }
+
+.expense-quickadd button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--violet), var(--magenta));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.expense-quickadd button:disabled { opacity: 0.5; cursor: not-allowed; }
