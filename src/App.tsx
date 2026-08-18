@@ -7,6 +7,7 @@ import { EntriesPage } from './pages/EntriesPage';
 import { TasksPage } from './pages/TasksPage';
 import { JournalPage } from './pages/JournalPage';
 import { FinancePage } from './pages/FinancePage';
+import { ProjectsPage } from './pages/ProjectsPage';
 import { AppShell, NavKey } from './components/AppShell';
 import './styles/galaxy.css';
 
@@ -33,11 +34,7 @@ export function App() {
       {activeTab === 'tasks' && <TasksPage />}
       {activeTab === 'journal' && <JournalPage />}
       {activeTab === 'finance' && <FinancePage />}
-      {activeTab !== 'dashboard' && activeTab !== 'entries' && activeTab !== 'tasks' && activeTab !== 'journal' && activeTab !== 'finance' && (
-        <p className="muted-text">
-          {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} module coming up next in the build order.
-        </p>
-      )}
+      {activeTab === 'projects' && <ProjectsPage />}
     </AppShell>
   );
 }
