@@ -8,6 +8,10 @@ import { TasksPage } from './pages/TasksPage';
 import { JournalPage } from './pages/JournalPage';
 import { FinancePage } from './pages/FinancePage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { InboxPage } from './pages/InboxPage';
+import { SkillsPage } from './pages/SkillsPage';
+import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
+import { CalendarPage } from './pages/CalendarPage';
 import { AppShell, NavKey } from './components/AppShell';
 import './styles/galaxy.css';
 
@@ -30,11 +34,15 @@ export function App() {
   return (
     <AppShell active={activeTab} onNavigate={setActiveTab} onSignOut={() => logout.mutate()}>
       {activeTab === 'dashboard' && <DashboardPage />}
+      {activeTab === 'inbox' && <InboxPage />}
       {activeTab === 'entries' && <EntriesPage />}
       {activeTab === 'tasks' && <TasksPage />}
       {activeTab === 'journal' && <JournalPage />}
       {activeTab === 'finance' && <FinancePage />}
       {activeTab === 'projects' && <ProjectsPage />}
+      {activeTab === 'skills' && <SkillsPage />}
+      {activeTab === 'knowledge' && <KnowledgeBasePage />}
+      {activeTab === 'calendar' && <CalendarPage />}
     </AppShell>
   );
 }

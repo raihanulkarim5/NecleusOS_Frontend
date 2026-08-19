@@ -4,11 +4,15 @@ import { Logo } from './Logo';
 
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard' },
+  { key: 'inbox', label: 'Inbox' },
   { key: 'entries', label: 'Entries' },
   { key: 'tasks', label: 'Tasks' },
   { key: 'journal', label: 'Journal' },
   { key: 'finance', label: 'Finance' },
   { key: 'projects', label: 'Projects' },
+  { key: 'skills', label: 'Skills' },
+  { key: 'knowledge', label: 'Knowledge' },
+  { key: 'calendar', label: 'Calendar' },
 ] as const;
 
 export type NavKey = (typeof NAV_ITEMS)[number]['key'];

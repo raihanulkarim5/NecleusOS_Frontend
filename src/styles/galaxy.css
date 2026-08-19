@@ -380,9 +380,10 @@ body {
 .shell-tabs {
   position: relative;
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   padding: 6px;
-  border-radius: 999px;
+  border-radius: 20px;
   background: rgba(15, 16, 40, 0.55);
   backdrop-filter: blur(16px);
   border: 1px solid var(--card-border);
@@ -1116,4 +1117,106 @@ body {
   border: 1px solid var(--card-border);
   padding: 3px 8px;
   border-radius: 999px;
+}
+
+/* Inbox module */
+.inbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inbox-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  backdrop-filter: blur(10px);
+}
+
+.inbox-content { font-size: 14px; flex: 1; }
+
+.inbox-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.inbox-actions button {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--cyan);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inbox-actions button.inbox-discard { color: var(--muted); }
+.inbox-actions button:hover { border-color: var(--violet); }
+
+/* Knowledge Base module */
+.kb-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.kb-folder-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Calendar module */
+.calendar-agenda {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.calendar-day {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  backdrop-filter: blur(10px);
+}
+
+.calendar-day-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--cyan);
+  margin-bottom: 8px;
+}
+
+.calendar-day-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calendar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.calendar-kind-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.kind-task { background: var(--cyan); }
+.kind-reminder { background: var(--violet); }
+.kind-journal { background: var(--magenta); }
+
+.calendar-kind-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  width: 60px;
+  flex-shrink: 0;
 }
