@@ -37,28 +37,26 @@ export function AppShell({ active, onNavigate, onSignOut, children }: AppShellPr
     <div className="shell">
       <StarfieldBackground />
 
-      <header className="shell-nav">
-        <div className="shell-logo">
-          <Logo />
-        </div>
+      <div className="shell-logo">
+        <Logo />
+      </div>
 
-        <nav className="shell-tabs">
-          <div className="shell-pill" style={{ left: pillStyle.left, width: pillStyle.width }} />
-          {NAV_ITEMS.map((item) => (
-            <div
-              key={item.key}
-              ref={(el) => (itemRefs.current[item.key] = el)}
-              className={`shell-tab${active === item.key ? ' active' : ''}`}
-              aria-current={active === item.key ? 'page' : undefined}
-              onClick={() => onNavigate(item.key)}
-            >
-              {item.label}
-            </div>
-          ))}
-        </nav>
+      <nav className="shell-tabs">
+        <div className="shell-pill" style={{ left: pillStyle.left, width: pillStyle.width }} />
+        {NAV_ITEMS.map((item) => (
+          <div
+            key={item.key}
+            ref={(el) => (itemRefs.current[item.key] = el)}
+            className={`shell-tab${active === item.key ? ' active' : ''}`}
+            aria-current={active === item.key ? 'page' : undefined}
+            onClick={() => onNavigate(item.key)}
+          >
+            {item.label}
+          </div>
+        ))}
+      </nav>
 
-        <button className="shell-signout" onClick={onSignOut}>Sign out</button>
-      </header>
+      <button className="shell-signout" onClick={onSignOut}>Sign out</button>
 
       <main className="shell-content">{children}</main>
     </div>
