@@ -9,6 +9,8 @@ interface AgendaItem {
   date: string;
   label: string;
   kind: AgendaKind;
+  detail: string;
+  mood?: number;
 }
 
 const KIND_LABELS: Record<AgendaKind, string> = {
@@ -56,15 +58,38 @@ export function CalendarPage() {
   const allItems = useMemo(() => {
     const items: AgendaItem[] = [];
     for (const task of tasks ?? []) {
-      if (task.dueDate) items.push({ date: task.dueDate, label: task.title, kind: 'task' });
+      if (!task.dueDate) continue;
+      const checklistPart =
+        task.checklist.length > 0
+          ? ` · ${task.checklist.filter((c) => c.done).length}/${task.checklist.length} done`
+          : '';
+      const effortPart = task.effortEstimateHours != null ? ` · ${task.effortEstimateHours}h est.` : '';
+      items.push({
+        date: task.dueDate,
+        label: task.title,
+        kind: 'task',
+        detail: `${task.status} · ${task.priority} priority${checklistPart}${effortPart}`,
+      });
     }
     for (const entry of entries ?? []) {
       if (entry.type === 'Reminder' && entry.dueDate) {
-        items.push({ date: entry.dueDate, label: entry.title, kind: 'reminder' });
+        items.push({
+          date: entry.dueDate,
+          label: entry.title,
+          kind: 'reminder',
+          detail: entry.description || `${entry.priority} priority`,
+        });
       }
     }
     for (const journal of journalEntries ?? []) {
-      items.push({ date: journal.date, label: `${journal.logType} log`, kind: 'journal' });
+      const snippet = journal.content.length > 80 ? `${journal.content.slice(0, 80)}…` : journal.content;
+      items.push({
+        date: journal.date,
+        label: `${journal.logType} log`,
+        kind: 'journal',
+        detail: snippet || 'No notes written',
+        mood: journal.mood,
+      });
     }
     return items;
   }, [tasks, entries, journalEntries]);
@@ -168,8 +193,20 @@ export function CalendarPage() {
           {selectedItems.map((item, i) => (
             <div className="calendar-item" key={i}>
               <span className={`calendar-kind-dot kind-${item.kind}`} />
-              <span className="calendar-kind-label">{item.kind}</span>
-              <span>{item.label}</span>
+              <div className="calendar-item-body">
+                <div className="calendar-item-top">
+                  <span className="calendar-kind-label">{item.kind}</span>
+                  <span className="calendar-item-label">{item.label}</span>
+                  {item.mood !== undefined && (
+                    <span className="mood-picker readonly">
+                      {[1, 2, 3, 4, 5].map((m) => (
+                        <span key={m} className={`mood-dot${m <= item.mood! ? ' active' : ''}`} />
+                      ))}
+                    </span>
+                  )}
+                </div>
+                <p className="calendar-item-detail">{item.detail}</p>
+              </div>
             </div>
           ))}
         </div>
