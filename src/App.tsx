@@ -9,7 +9,7 @@ import { JournalPage } from './pages/JournalPage';
 import { FinancePage } from './pages/FinancePage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { InboxPage } from './pages/InboxPage';
-import { SkillsPage } from './pages/SkillsPage';
+import { SkillsModule } from './pages/SkillsModule';
 import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import { CalendarPage } from './pages/CalendarPage';
 import { AppShell, NavKey } from './components/AppShell';
@@ -40,7 +40,7 @@ export function App() {
       {activeTab === 'journal' && <JournalPage />}
       {activeTab === 'finance' && <FinancePage />}
       {activeTab === 'projects' && <ProjectsPage />}
-      {activeTab === 'skills' && <SkillsPage />}
+      {activeTab === 'skills' && <SkillsModule />}
       {activeTab === 'knowledge' && <KnowledgeBasePage />}
       {activeTab === 'calendar' && <CalendarPage />}
     </AppShell>
