@@ -5,11 +5,50 @@ import type { Skill, SkillDraft } from '../types/skill';
 type SubTab = 'all' | 'in-progress' | 'roadmap' | 'achievement';
 type SortKey = 'updated' | 'name' | 'progress';
 
-const SUB_TABS: { key: SubTab; label: string }[] = [
-  { key: 'all', label: 'All skills' },
-  { key: 'in-progress', label: 'In progress' },
-  { key: 'roadmap', label: 'Roadmap' },
-  { key: 'achievement', label: 'Achievement' },
+function GridIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="3" width="8" height="8" rx="1.5" />
+      <rect x="13" y="3" width="8" height="8" rx="1.5" />
+      <rect x="3" y="13" width="8" height="8" rx="1.5" />
+      <rect x="13" y="13" width="8" height="8" rx="1.5" />
+    </svg>
+  );
+}
+
+function FlameIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M12 2c1 3-3 4-3 8a3 3 0 0 0 6 0c1 1 2 3 2 5a5 5 0 0 1-10 0c0-4 3-6 3-9 0-1.5 1-3 2-4z" />
+    </svg>
+  );
+}
+
+function RouteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="5" cy="18" r="2.2" />
+      <circle cx="19" cy="6" r="2.2" />
+      <path d="M7 17c4-1 6-4 6-8s3-6 5-6" />
+    </svg>
+  );
+}
+
+function TrophyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M8 4h8v4a4 4 0 0 1-8 0V4z" />
+      <path d="M8 5H5a3 3 0 0 0 3 4M16 5h3a3 3 0 0 1-3 4" />
+      <path d="M10 15h4M12 12v3M9 19h6l-1-2H10l-1 2z" />
+    </svg>
+  );
+}
+
+const SUB_TABS: { key: SubTab; label: string; icon: () => JSX.Element }[] = [
+  { key: 'all', label: 'All skills', icon: GridIcon },
+  { key: 'in-progress', label: 'In progress', icon: FlameIcon },
+  { key: 'roadmap', label: 'Roadmap', icon: RouteIcon },
+  { key: 'achievement', label: 'Achievement', icon: TrophyIcon },
 ];
 
 interface SkillsListPageProps {
@@ -57,15 +96,19 @@ export function SkillsListPage({ onOpenSkill }: SkillsListPageProps) {
       <p className="page-date">Learn. Practice. Master.</p>
 
       <div className="sub-tabs">
-        {SUB_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            className={`sub-tab${subTab === tab.key ? ' active' : ''}`}
-            onClick={() => setSubTab(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {SUB_TABS.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.key}
+              className={`sub-tab${subTab === tab.key ? ' active' : ''}`}
+              onClick={() => setSubTab(tab.key)}
+            >
+              <span className="sub-tab-icon"><Icon /></span>
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="skills-toolbar">

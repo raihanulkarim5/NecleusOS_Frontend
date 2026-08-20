@@ -78,10 +78,10 @@ let skills: Skill[] = [
       { id: 'r7', title: 'Testing (RTL)', done: false },
     ],
     resources: [{ id: 'res3', title: 'React docs (beta)', url: 'https://react.dev', type: 'Link' }],
-    courses: [],
+    courses: [{ id: 'c2', title: 'React + TypeScript: The Complete Guide', provider: 'Frontend Masters', url: '#' }],
     videos: [{ id: 'v2', title: 'TanStack Query crash course', url: '#' }],
-    practiceTasks: [],
-    notes: '',
+    practiceTasks: [{ type: 'task', id: 'tk2', title: 'Design Finance module schema' }],
+    notes: 'The service-abstraction pattern (interface + mock + real) is doing a lot of work — worth reusing outside Personal OS too.',
     projects: [{ type: 'project', id: 'p1', title: 'Personal OS' }],
     milestones: [],
     tags: ['frontend'],
@@ -97,11 +97,11 @@ let skills: Skill[] = [
     progressPercent: 0,
     roadmapId: null,
     syllabus: [{ id: 'r8', title: 'Dart basics', done: false }],
-    resources: [],
-    courses: [],
+    resources: [{ id: 'res4', title: 'Flutter docs', url: 'https://docs.flutter.dev', type: 'Link' }],
+    courses: [{ id: 'c3', title: 'Flutter & Dart: The Complete Guide', provider: 'Udemy', url: '#' }],
     videos: [],
     practiceTasks: [],
-    notes: '',
+    notes: 'Parked until the Personal OS API exists — Flutter will consume the same endpoints as the web app.',
     projects: [],
     milestones: [],
     tags: ['mobile', 'later'],
@@ -120,10 +120,10 @@ let skills: Skill[] = [
       { id: 'r9', title: 'Execution plans', done: true },
       { id: 'r10', title: 'Indexing strategy', done: true },
     ],
-    resources: [],
+    resources: [{ id: 'res5', title: 'SQL Server execution plans (PDF)', url: '#', type: 'PDF' }],
     courses: [],
-    videos: [],
-    practiceTasks: [],
+    videos: [{ id: 'v3', title: 'Reading execution plans', url: '#' }],
+    practiceTasks: [{ type: 'task', id: 'tk5', title: 'Fix Bug #142 in Crystal Report export' }],
     notes: 'Learned most of this on the job fixing Crystal Report query timeouts.',
     projects: [{ type: 'project', id: 'p2', title: 'ERP System' }],
     milestones: [{ id: 'ms2', title: 'Cut report query time by 50%', done: true }],
@@ -191,6 +191,19 @@ export const mockSkillService: SkillService = {
     return updated;
   },
 
+  async addSyllabusItem(skillId: string, title: string): Promise<Skill> {
+    await delay(250);
+    skills = skills.map((s) => {
+      if (s.id !== skillId) return s;
+      const syllabus = [...s.syllabus, { id: `sy${Date.now()}`, title, done: false }];
+      const progressPercent = computeProgress(syllabus);
+      return { ...s, syllabus, progressPercent, status: statusFromProgress(progressPercent), updatedAt: today() };
+    });
+    const updated = skills.find((s) => s.id === skillId);
+    if (!updated) throw new Error('Skill not found');
+    return updated;
+  },
+
   async toggleMilestone(skillId: string, milestoneId: string): Promise<Skill> {
     await delay(200);
     skills = skills.map((s) => {
@@ -198,6 +211,66 @@ export const mockSkillService: SkillService = {
       const milestones = s.milestones.map((m) => (m.id === milestoneId ? { ...m, done: !m.done } : m));
       return { ...s, milestones, updatedAt: today() };
     });
+    const updated = skills.find((s) => s.id === skillId);
+    if (!updated) throw new Error('Skill not found');
+    return updated;
+  },
+
+  async addMilestone(skillId: string, title: string): Promise<Skill> {
+    await delay(250);
+    skills = skills.map((s) =>
+      s.id === skillId
+        ? { ...s, milestones: [...s.milestones, { id: `ms${Date.now()}`, title, done: false }], updatedAt: today() }
+        : s,
+    );
+    const updated = skills.find((s) => s.id === skillId);
+    if (!updated) throw new Error('Skill not found');
+    return updated;
+  },
+
+  async addResource(skillId: string, title: string, url: string, type: 'Link' | 'PDF'): Promise<Skill> {
+    await delay(250);
+    skills = skills.map((s) =>
+      s.id === skillId
+        ? { ...s, resources: [...s.resources, { id: `res${Date.now()}`, title, url, type }], updatedAt: today() }
+        : s,
+    );
+    const updated = skills.find((s) => s.id === skillId);
+    if (!updated) throw new Error('Skill not found');
+    return updated;
+  },
+
+  async addCourse(skillId: string, title: string, provider: string, url: string): Promise<Skill> {
+    await delay(250);
+    skills = skills.map((s) =>
+      s.id === skillId
+        ? { ...s, courses: [...s.courses, { id: `c${Date.now()}`, title, provider, url }], updatedAt: today() }
+        : s,
+    );
+    const updated = skills.find((s) => s.id === skillId);
+    if (!updated) throw new Error('Skill not found');
+    return updated;
+  },
+
+  async addVideo(skillId: string, title: string, url: string): Promise<Skill> {
+    await delay(250);
+    skills = skills.map((s) =>
+      s.id === skillId
+        ? { ...s, videos: [...s.videos, { id: `v${Date.now()}`, title, url }], updatedAt: today() }
+        : s,
+    );
+    const updated = skills.find((s) => s.id === skillId);
+    if (!updated) throw new Error('Skill not found');
+    return updated;
+  },
+
+  async addPracticeTask(skillId: string, taskId: string, taskTitle: string): Promise<Skill> {
+    await delay(250);
+    skills = skills.map((s) =>
+      s.id === skillId
+        ? { ...s, practiceTasks: [...s.practiceTasks, { type: 'task', id: taskId, title: taskTitle }], updatedAt: today() }
+        : s,
+    );
     const updated = skills.find((s) => s.id === skillId);
     if (!updated) throw new Error('Skill not found');
     return updated;

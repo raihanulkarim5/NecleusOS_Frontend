@@ -41,6 +41,17 @@ export function useToggleSyllabusItem() {
   });
 }
 
+export function useAddSyllabusItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, title }: { skillId: string; title: string }) => skillService.addSyllabusItem(skillId, title),
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['skills'] });
+      queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] });
+    },
+  });
+}
+
 export function useToggleSkillMilestone() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -50,6 +61,53 @@ export function useToggleSkillMilestone() {
       queryClient.invalidateQueries({ queryKey: ['skills'] });
       queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] });
     },
+  });
+}
+
+export function useAddMilestone() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, title }: { skillId: string; title: string }) => skillService.addMilestone(skillId, title),
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['skills'] });
+      queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] });
+    },
+  });
+}
+
+export function useAddResource() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, title, url, type }: { skillId: string; title: string; url: string; type: 'Link' | 'PDF' }) =>
+      skillService.addResource(skillId, title, url, type),
+    onSuccess: (_data, vars) => queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] }),
+  });
+}
+
+export function useAddCourse() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, title, provider, url }: { skillId: string; title: string; provider: string; url: string }) =>
+      skillService.addCourse(skillId, title, provider, url),
+    onSuccess: (_data, vars) => queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] }),
+  });
+}
+
+export function useAddVideo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, title, url }: { skillId: string; title: string; url: string }) =>
+      skillService.addVideo(skillId, title, url),
+    onSuccess: (_data, vars) => queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] }),
+  });
+}
+
+export function useAddPracticeTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, taskId, taskTitle }: { skillId: string; taskId: string; taskTitle: string }) =>
+      skillService.addPracticeTask(skillId, taskId, taskTitle),
+    onSuccess: (_data, vars) => queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] }),
   });
 }
 

@@ -1378,23 +1378,41 @@ body {
   gap: 6px;
   margin: 16px 0;
   flex-wrap: wrap;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  width: fit-content;
 }
 
 .sub-tab {
-  padding: 7px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--card-border);
-  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
   color: var(--muted);
   font-size: 13px;
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
+
+.sub-tab-icon {
+  display: flex;
+  align-items: center;
+  opacity: 0.8;
+}
+
+.sub-tab:hover { background: rgba(255, 255, 255, 0.04); }
 
 .sub-tab.active {
   background: rgba(139, 92, 246, 0.16);
-  border-color: rgba(139, 92, 246, 0.4);
   color: var(--violet);
 }
+
+.sub-tab.active .sub-tab-icon { opacity: 1; }
 
 /* Skills toolbar */
 .skills-toolbar {
@@ -1524,3 +1542,46 @@ body {
 }
 
 .skill-notes:focus { border-color: var(--violet); }
+
+/* Inline add rows within skill detail sections */
+.inline-add-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.inline-add-row input[type="text"] {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink);
+  font-size: 12px;
+  outline: none;
+}
+
+.inline-add-row select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.inline-add-row button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(139, 92, 246, 0.18);
+  color: var(--violet);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inline-add-row button:disabled { opacity: 0.4; cursor: not-allowed; }
