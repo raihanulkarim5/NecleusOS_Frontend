@@ -13,11 +13,116 @@ import {
   useUpdateSkillNotes,
 } from '../hooks/useSkills';
 import { useTasks } from '../hooks/useTasks';
+import type { Skill } from '../types/skill';
 
 interface SkillDetailPageProps {
   skillId: string;
   onBack: () => void;
 }
+
+type SectionKey =
+  | 'overview'
+  | 'syllabus'
+  | 'resources'
+  | 'courses'
+  | 'videos'
+  | 'practice'
+  | 'notes'
+  | 'projects'
+  | 'milestones'
+  | 'progress';
+
+function OverviewIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 8v.01" />
+    </svg>
+  );
+}
+function SyllabusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M5 6h14M5 12h14M5 18h9" />
+      <circle cx="19" cy="18" r="1.4" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function ResourceIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M10 13a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1" />
+      <path d="M14 11a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1" />
+    </svg>
+  );
+}
+function CourseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16z" />
+      <path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20" />
+    </svg>
+  );
+}
+function VideoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M10 9l5 3-5 3V9z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function PracticeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M9 12l2 2 4-4" />
+      <rect x="3" y="3" width="18" height="18" rx="4" />
+    </svg>
+  );
+}
+function NotesIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M8 8h8M8 12h8M8 16h5" />
+    </svg>
+  );
+}
+function ProjectIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+    </svg>
+  );
+}
+function MilestoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M5 3v18" />
+      <path d="M5 4h11l-2 3 2 3H5" />
+    </svg>
+  );
+}
+function ProgressIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4 20V10M12 20V4M20 20v-6" />
+    </svg>
+  );
+}
+
+const SECTIONS: { key: SectionKey; label: string; icon: () => JSX.Element }[] = [
+  { key: 'overview', label: 'Overview', icon: OverviewIcon },
+  { key: 'syllabus', label: 'Roadmap / Syllabus', icon: SyllabusIcon },
+  { key: 'resources', label: 'Resources', icon: ResourceIcon },
+  { key: 'courses', label: 'Courses', icon: CourseIcon },
+  { key: 'videos', label: 'Videos / Playlists', icon: VideoIcon },
+  { key: 'practice', label: 'Practice tasks', icon: PracticeIcon },
+  { key: 'notes', label: 'Notes', icon: NotesIcon },
+  { key: 'projects', label: 'Projects', icon: ProjectIcon },
+  { key: 'milestones', label: 'Milestones', icon: MilestoneIcon },
+  { key: 'progress', label: 'Progress tracker', icon: ProgressIcon },
+];
 
 export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   const { data: skill, isLoading } = useSkill(skillId);
@@ -33,6 +138,7 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   const updateNotes = useUpdateSkillNotes();
   const { data: tasks } = useTasks();
 
+  const [section, setSection] = useState<SectionKey>('overview');
   const [notesDraft, setNotesDraft] = useState('');
 
   useEffect(() => {
@@ -46,6 +152,7 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
 
   const linkedTaskIds = new Set(skill.practiceTasks.map((t) => t.id));
   const unlinkedTasks = (tasks ?? []).filter((t) => !linkedTaskIds.has(t.id));
+  const nextStep = skill.syllabus.find((s) => !s.done);
 
   return (
     <div>
@@ -69,21 +176,25 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
         </button>
       </div>
 
-      <section>
-        <h2 className="section-title">Progress tracker</h2>
-        <div className="stat-card">
-          <div className="budget-row-top">
-            <span className="budget-cat">Overall progress</span>
-            <span className="budget-amounts">{skill.progressPercent}%</span>
-          </div>
-          <div className="bar-track">
-            <div className="bar-fill" style={{ width: `${skill.progressPercent}%` }} />
-          </div>
-        </div>
-      </section>
+      <div className="sub-tabs">
+        {SECTIONS.map((s) => {
+          const Icon = s.icon;
+          return (
+            <button
+              key={s.key}
+              className={`sub-tab${section === s.key ? ' active' : ''}`}
+              onClick={() => setSection(s.key)}
+            >
+              <span className="sub-tab-icon"><Icon /></span>
+              {s.label}
+            </button>
+          );
+        })}
+      </div>
 
-      <section>
-        <h2 className="section-title">Roadmap / syllabus</h2>
+      {section === 'overview' && <OverviewSection skill={skill} nextStepTitle={nextStep?.title} />}
+
+      {section === 'syllabus' && (
         <div className="stat-card">
           {skill.syllabus.length === 0 && <p className="muted-text">No syllabus steps yet.</p>}
           {skill.syllabus.map((item) => (
@@ -101,10 +212,91 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
             onAdd={(title) => addSyllabusItem.mutate({ skillId: skill.id, title })}
           />
         </div>
-      </section>
+      )}
 
-      <section>
-        <h2 className="section-title">Milestones</h2>
+      {section === 'resources' && (
+        <div className="stat-card">
+          {skill.resources.length === 0 && <p className="muted-text">No resources added.</p>}
+          {skill.resources.map((r) => (
+            <div className="skill-resource-row" key={r.id}>
+              <span className="entry-type-badge">{r.type}</span>
+              <span>{r.title}</span>
+            </div>
+          ))}
+          <AddResourceRow onAdd={(title, url, type) => addResource.mutate({ skillId: skill.id, title, url, type })} />
+        </div>
+      )}
+
+      {section === 'courses' && (
+        <div className="stat-card">
+          {skill.courses.length === 0 && <p className="muted-text">No courses added.</p>}
+          {skill.courses.map((c) => (
+            <div className="skill-resource-row" key={c.id}>
+              <span>{c.title}</span>
+              <span className="muted-text">{c.provider}</span>
+            </div>
+          ))}
+          <AddCourseRow onAdd={(title, provider, url) => addCourse.mutate({ skillId: skill.id, title, provider, url })} />
+        </div>
+      )}
+
+      {section === 'videos' && (
+        <div className="stat-card">
+          {skill.videos.length === 0 && <p className="muted-text">No videos added.</p>}
+          {skill.videos.map((v) => (
+            <div className="skill-resource-row" key={v.id}>
+              <span>{v.title}</span>
+            </div>
+          ))}
+          <InlineAddRow
+            placeholder="Add a video title…"
+            onAdd={(title) => addVideo.mutate({ skillId: skill.id, title, url: '#' })}
+          />
+        </div>
+      )}
+
+      {section === 'practice' && (
+        <div className="stat-card">
+          {skill.practiceTasks.length === 0 && <p className="muted-text">No linked tasks.</p>}
+          {skill.practiceTasks.map((t) => (
+            <div className="project-link-badge" key={t.id} style={{ marginBottom: 6, display: 'inline-block' }}>
+              {t.type}: {t.title}
+            </div>
+          ))}
+          {unlinkedTasks.length > 0 && (
+            <LinkTaskRow
+              tasks={unlinkedTasks}
+              onLink={(taskId, taskTitle) => addPracticeTask.mutate({ skillId: skill.id, taskId, taskTitle })}
+            />
+          )}
+        </div>
+      )}
+
+      {section === 'notes' && (
+        <textarea
+          className="skill-notes"
+          rows={8}
+          value={notesDraft}
+          placeholder="Freeform notes about this skill…"
+          onChange={(e) => setNotesDraft(e.target.value)}
+          onBlur={() => {
+            if (notesDraft !== skill.notes) updateNotes.mutate({ id: skill.id, notes: notesDraft });
+          }}
+        />
+      )}
+
+      {section === 'projects' &&
+        (skill.projects.length === 0 ? (
+          <p className="muted-text">No linked projects.</p>
+        ) : (
+          <div className="project-links">
+            {skill.projects.map((p) => (
+              <span key={p.id} className="project-link-badge">{p.type}: {p.title}</span>
+            ))}
+          </div>
+        ))}
+
+      {section === 'milestones' && (
         <div className="stat-card">
           {skill.milestones.length === 0 && <p className="muted-text">No milestones set.</p>}
           {skill.milestones.map((m) => (
@@ -122,98 +314,52 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
             onAdd={(title) => addMilestone.mutate({ skillId: skill.id, title })}
           />
         </div>
-      </section>
+      )}
 
-      <div className="skill-detail-grid">
-        <section>
-          <h2 className="section-title">Resources</h2>
-          <div className="stat-card">
-            {skill.resources.length === 0 && <p className="muted-text">No resources added.</p>}
-            {skill.resources.map((r) => (
-              <div className="skill-resource-row" key={r.id}>
-                <span className="entry-type-badge">{r.type}</span>
-                <span>{r.title}</span>
-              </div>
-            ))}
-            <AddResourceRow onAdd={(title, url, type) => addResource.mutate({ skillId: skill.id, title, url, type })} />
+      {section === 'progress' && (
+        <div className="stat-card">
+          <div className="budget-row-top">
+            <span className="budget-cat">Overall progress</span>
+            <span className="budget-amounts">{skill.progressPercent}%</span>
           </div>
-        </section>
+          <div className="bar-track">
+            <div className="bar-fill" style={{ width: `${skill.progressPercent}%` }} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
-        <section>
-          <h2 className="section-title">Courses</h2>
-          <div className="stat-card">
-            {skill.courses.length === 0 && <p className="muted-text">No courses added.</p>}
-            {skill.courses.map((c) => (
-              <div className="skill-resource-row" key={c.id}>
-                <span>{c.title}</span>
-                <span className="muted-text">{c.provider}</span>
-              </div>
-            ))}
-            <AddCourseRow onAdd={(title, provider, url) => addCourse.mutate({ skillId: skill.id, title, provider, url })} />
-          </div>
-        </section>
-
-        <section>
-          <h2 className="section-title">Videos / playlists</h2>
-          <div className="stat-card">
-            {skill.videos.length === 0 && <p className="muted-text">No videos added.</p>}
-            {skill.videos.map((v) => (
-              <div className="skill-resource-row" key={v.id}>
-                <span>{v.title}</span>
-              </div>
-            ))}
-            <InlineAddRow
-              placeholder="Add a video title…"
-              onAdd={(title) => addVideo.mutate({ skillId: skill.id, title, url: '#' })}
-            />
-          </div>
-        </section>
-
-        <section>
-          <h2 className="section-title">Practice tasks</h2>
-          <div className="stat-card">
-            {skill.practiceTasks.length === 0 && <p className="muted-text">No linked tasks.</p>}
-            {skill.practiceTasks.map((t) => (
-              <div className="project-link-badge" key={t.id} style={{ marginBottom: 6, display: 'inline-block' }}>
-                {t.type}: {t.title}
-              </div>
-            ))}
-            {unlinkedTasks.length > 0 && (
-              <LinkTaskRow
-                tasks={unlinkedTasks}
-                onLink={(taskId, taskTitle) => addPracticeTask.mutate({ skillId: skill.id, taskId, taskTitle })}
-              />
-            )}
-          </div>
-        </section>
+function OverviewSection({ skill, nextStepTitle }: { skill: Skill; nextStepTitle?: string }) {
+  const doneMilestones = skill.milestones.filter((m) => m.done).length;
+  return (
+    <div>
+      <div className="stat-grid">
+        <div className="stat-card">
+          <div className="stat-label">Progress</div>
+          <div className="stat-big glow-cyan">{skill.progressPercent}%</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Status</div>
+          <div className="stat-big glow-violet" style={{ fontSize: 18 }}>{skill.status}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Milestones</div>
+          <div className="stat-big glow-magenta">{doneMilestones}/{skill.milestones.length}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Next step</div>
+          <div style={{ fontSize: 13, marginTop: 6 }}>{nextStepTitle ?? 'All caught up'}</div>
+        </div>
       </div>
-
-      <section>
-        <h2 className="section-title">Projects</h2>
-        {skill.projects.length === 0 ? (
-          <p className="muted-text">No linked projects.</p>
-        ) : (
-          <div className="project-links">
-            {skill.projects.map((p) => (
-              <span key={p.id} className="project-link-badge">{p.type}: {p.title}</span>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section>
-        <h2 className="section-title">Notes</h2>
-        <textarea
-          className="skill-notes"
-          rows={4}
-          value={notesDraft}
-          placeholder="Freeform notes about this skill…"
-          onChange={(e) => setNotesDraft(e.target.value)}
-          onBlur={() => {
-            if (notesDraft !== skill.notes) updateNotes.mutate({ id: skill.id, notes: notesDraft });
-          }}
-        />
-      </section>
+      {skill.tags.length > 0 && (
+        <div className="entry-tags" style={{ marginTop: 16 }}>
+          {skill.tags.map((tag) => (
+            <span key={tag} className="entry-tag">#{tag}</span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
