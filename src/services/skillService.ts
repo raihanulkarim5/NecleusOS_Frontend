@@ -1,9 +1,10 @@
-import type { Skill, SkillDraft, SkillRoadmap } from '../types/skill';
+import type { RoadmapDraft, Skill, SkillDraft, SkillRoadmap } from '../types/skill';
 
 export interface SkillService {
   getSkills(): Promise<Skill[]>;
   getSkill(id: string): Promise<Skill | null>;
   getRoadmaps(): Promise<SkillRoadmap[]>;
+  createRoadmap(draft: RoadmapDraft): Promise<SkillRoadmap>;
   createSkill(draft: SkillDraft): Promise<Skill>;
   toggleSyllabusItem(skillId: string, itemId: string): Promise<Skill>;
   addSyllabusItem(skillId: string, title: string): Promise<Skill>;

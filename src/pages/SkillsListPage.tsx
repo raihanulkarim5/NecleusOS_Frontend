@@ -1,5 +1,5 @@
 import { FormEvent, useMemo, useState } from 'react';
-import { useCreateSkill, useSkillRoadmaps, useSkills } from '../hooks/useSkills';
+import { useCreateRoadmap, useCreateSkill, useSkillRoadmaps, useSkills } from '../hooks/useSkills';
 import type { Skill, SkillDraft } from '../types/skill';
 
 type SubTab = 'all' | 'in-progress' | 'roadmap' | 'achievement';
@@ -238,10 +238,14 @@ function AddSkillModal({
   onClose: () => void;
   onSubmit: (draft: SkillDraft) => void;
 }) {
+  const createRoadmap = useCreateRoadmap();
+
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [roadmapId, setRoadmapId] = useState('');
   const [tags, setTags] = useState('');
+  const [creatingRoadmap, setCreatingRoadmap] = useState(false);
+  const [newRoadmapName, setNewRoadmapName] = useState('');
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -252,6 +256,14 @@ function AddSkillModal({
       roadmapId: roadmapId || null,
       tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
     });
+  }
+
+  async function handleCreateRoadmap() {
+    if (!newRoadmapName.trim()) return;
+    const roadmap = await createRoadmap.mutateAsync({ name: newRoadmapName.trim(), description: '' });
+    setRoadmapId(roadmap.id);
+    setNewRoadmapName('');
+    setCreatingRoadmap(false);
   }
 
   return (
@@ -275,12 +287,56 @@ function AddSkillModal({
           </div>
           <div className="field">
             <label htmlFor="skill-roadmap">Roadmap (optional)</label>
-            <select id="skill-roadmap" value={roadmapId} onChange={(e) => setRoadmapId(e.target.value)}>
-              <option value="">None</option>
-              {roadmapOptions.map((r) => (
-                <option key={r.id} value={r.id}>{r.name}</option>
-              ))}
-            </select>
+            {!creatingRoadmap ? (
+              <div className="roadmap-select-row">
+                <select
+                  id="skill-roadmap"
+                  value={roadmapId}
+                  onChange={(e) => setRoadmapId(e.target.value)}
+                >
+                  <option value="">None</option>
+                  {roadmapOptions.map((r) => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+                <button type="button" className="roadmap-new-btn" onClick={() => setCreatingRoadmap(true)}>
+                  + New
+                </button>
+              </div>
+            ) : (
+              <div className="roadmap-select-row">
+                <input
+                  type="text"
+                  placeholder="New roadmap name…"
+                  value={newRoadmapName}
+                  onChange={(e) => setNewRoadmapName(e.target.value)}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  className="roadmap-new-btn"
+                  onClick={handleCreateRoadmap}
+                  disabled={!newRoadmapName.trim() || createRoadmap.isPending}
+                >
+                  {createRoadmap.isPending ? 'Creating…' : 'Create'}
+                </button>
+                <button
+                  type="button"
+                  className="modal-cancel"
+                  onClick={() => {
+                    setCreatingRoadmap(false);
+                    setNewRoadmapName('');
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+            {roadmapId && !creatingRoadmap && (
+              <p className="roadmap-selected-hint">
+                Assigned to: {roadmapOptions.find((r) => r.id === roadmapId)?.name}
+              </p>
+            )}
           </div>
           <div className="field">
             <label htmlFor="skill-tags">Tags (comma separated)</label>

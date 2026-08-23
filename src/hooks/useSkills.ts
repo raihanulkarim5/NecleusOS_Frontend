@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { skillService } from '../services';
-import type { SkillDraft } from '../types/skill';
+import type { RoadmapDraft, SkillDraft } from '../types/skill';
 
 export function useSkills() {
   return useQuery({ queryKey: ['skills'], queryFn: () => skillService.getSkills() });
@@ -16,6 +16,14 @@ export function useSkill(id: string | null) {
 
 export function useSkillRoadmaps() {
   return useQuery({ queryKey: ['skill-roadmaps'], queryFn: () => skillService.getRoadmaps() });
+}
+
+export function useCreateRoadmap() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (draft: RoadmapDraft) => skillService.createRoadmap(draft),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['skill-roadmaps'] }),
+  });
 }
 
 export function useCreateSkill() {

@@ -1,5 +1,5 @@
 import type { SkillService } from './skillService';
-import type { Skill, SkillDraft, SkillRoadmap } from '../types/skill';
+import type { RoadmapDraft, Skill, SkillDraft, SkillRoadmap } from '../types/skill';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const today = () => new Date().toISOString().slice(0, 10);
@@ -15,7 +15,7 @@ function statusFromProgress(pct: number): Skill['status'] {
   return 'In Progress';
 }
 
-const roadmaps: SkillRoadmap[] = [
+let roadmaps: SkillRoadmap[] = [
   {
     id: 'rm1',
     name: 'Backend developer path',
@@ -148,6 +148,14 @@ export const mockSkillService: SkillService = {
   async getRoadmaps(): Promise<SkillRoadmap[]> {
     await delay(300);
     return roadmaps;
+  },
+
+  async createRoadmap(draft: RoadmapDraft): Promise<SkillRoadmap> {
+    await delay(300);
+    const now = today();
+    const roadmap: SkillRoadmap = { id: `rm${Date.now()}`, ...draft, skillIds: [], createdAt: now, updatedAt: now };
+    roadmaps = [...roadmaps, roadmap];
+    return roadmap;
   },
 
   async createSkill(draft: SkillDraft): Promise<Skill> {

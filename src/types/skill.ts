@@ -47,6 +47,11 @@ export interface SkillRoadmap {
   updatedAt: string;
 }
 
+export interface RoadmapDraft {
+  name: string;
+  description: string;
+}
+
 export interface Skill {
   id: string;
   name: string;
