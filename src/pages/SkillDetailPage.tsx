@@ -16,12 +16,13 @@ import {
   useUnlinkSkillProject,
   useUpdateSkillDescription,
   useUpdateSkillNotes,
+  useUpdateSyllabusItemDetails,
 } from '../hooks/useSkills';
 import { useCreateTask, useTasks } from '../hooks/useTasks';
 import { useCreateProject, useProjects } from '../hooks/useProjects';
 import { RichNotesEditor } from '../components/RichNotesEditor';
 import type { LinkRef } from '../types/link';
-import type { Skill, SkillMilestone, SyllabusItem } from '../types/skill';
+import type { Skill, SkillMilestone } from '../types/skill';
 import type { Project } from '../types/project';
 
 interface SkillDetailPageProps {
@@ -29,7 +30,7 @@ interface SkillDetailPageProps {
   onBack: () => void;
 }
 
-type SectionKey = 'overview' | 'syllabus' | 'resources' | 'courses' | 'videos' | 'practice' | 'notes' | 'projects' | 'milestones';
+type SectionKey = 'overview' | 'syllabus' | 'resources' | 'courses' | 'videos' | 'practice' | 'notes' | 'projects';
 
 function OverviewIcon() {
   return (
@@ -105,14 +106,13 @@ function MilestoneIcon() {
 
 const SECTIONS: { key: SectionKey; label: string; icon: () => JSX.Element }[] = [
   { key: 'overview', label: 'Overview', icon: OverviewIcon },
-  { key: 'syllabus', label: 'Roadmap / Syllabus', icon: SyllabusIcon },
+  { key: 'syllabus', label: 'Milestones & Roadmap', icon: MilestoneIcon },
   { key: 'resources', label: 'Resources', icon: ResourceIcon },
   { key: 'courses', label: 'Courses', icon: CourseIcon },
   { key: 'videos', label: 'Videos / Playlists', icon: VideoIcon },
   { key: 'practice', label: 'Practice tasks', icon: PracticeIcon },
   { key: 'notes', label: 'Notes', icon: NotesIcon },
   { key: 'projects', label: 'Projects', icon: ProjectIcon },
-  { key: 'milestones', label: 'Milestones', icon: MilestoneIcon },
 ];
 
 export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
@@ -120,6 +120,7 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   const toggleSyllabusItem = useToggleSyllabusItem();
   const addSyllabusItem = useAddSyllabusItem();
   const setSyllabusItemProject = useSetSyllabusItemProject();
+  const updateSyllabusItemDetails = useUpdateSyllabusItemDetails();
   const toggleMilestone = useToggleSkillMilestone();
   const addMilestone = useAddMilestone();
   const setMilestoneProject = useSetMilestoneProject();
@@ -150,7 +151,7 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   const linkedProjectIds = new Set(skill.projects.map((p) => p.id));
   const unlinkedProjects = (allProjects ?? []).filter((p) => !linkedProjectIds.has(p.id));
   const projectById = new Map((allProjects ?? []).map((p) => [p.id, p]));
-  const nextStep = skill.syllabus.find((s) => !s.done);
+  const nextStep = skill.milestones.flatMap((m) => m.syllabus).find((s) => !s.done);
 
   function startEditingDescription() {
     setDescriptionDraft(skill!.description);
@@ -229,20 +230,28 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
       {section === 'overview' && <OverviewSection skill={skill} nextStepTitle={nextStep?.title} />}
 
       {section === 'syllabus' && (
-        <div className="stat-card">
-          {skill.syllabus.length === 0 && <p className="muted-text">No syllabus steps yet.</p>}
-          {skill.syllabus.map((item) => (
-            <SyllabusRow
-              key={item.id}
-              item={item}
+        <div>
+          {skill.milestones.length === 0 && <p className="muted-text">No milestones yet.</p>}
+          {skill.milestones.map((m) => (
+            <MilestoneGroup
+              key={m.id}
+              milestone={m}
               projects={allProjects ?? []}
-              onToggle={() => toggleSyllabusItem.mutate({ skillId: skill.id, itemId: item.id })}
-              onSetProject={(ref) => setSyllabusItemProject.mutate({ skillId: skill.id, itemId: item.id, projectRef: ref })}
+              onToggleMilestone={() => toggleMilestone.mutate({ skillId: skill.id, milestoneId: m.id })}
+              onSetMilestoneProject={(ref) => setMilestoneProject.mutate({ skillId: skill.id, milestoneId: m.id, projectRef: ref })}
+              onToggleItem={(itemId) => toggleSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, itemId })}
+              onAddItem={(title) => addSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, title })}
+              onSetItemDetails={(itemId, details) =>
+                updateSyllabusItemDetails.mutate({ skillId: skill.id, milestoneId: m.id, itemId, details })
+              }
+              onSetItemProject={(itemId, ref) =>
+                setSyllabusItemProject.mutate({ skillId: skill.id, milestoneId: m.id, itemId, projectRef: ref })
+              }
             />
           ))}
           <InlineAddRow
-            placeholder="Add a syllabus step…"
-            onAdd={(title) => addSyllabusItem.mutate({ skillId: skill.id, title })}
+            placeholder="Add a milestone…"
+            onAdd={(title) => addMilestone.mutate({ skillId: skill.id, title })}
           />
         </div>
       )}
@@ -375,25 +384,6 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
           />
         </div>
       )}
-
-      {section === 'milestones' && (
-        <div className="stat-card">
-          {skill.milestones.length === 0 && <p className="muted-text">No milestones set.</p>}
-          {skill.milestones.map((m) => (
-            <MilestoneRow
-              key={m.id}
-              milestone={m}
-              projects={allProjects ?? []}
-              onToggle={() => toggleMilestone.mutate({ skillId: skill.id, milestoneId: m.id })}
-              onSetProject={(ref) => setMilestoneProject.mutate({ skillId: skill.id, milestoneId: m.id, projectRef: ref })}
-            />
-          ))}
-          <InlineAddRow
-            placeholder="Add a milestone…"
-            onAdd={(title) => addMilestone.mutate({ skillId: skill.id, title })}
-          />
-        </div>
-      )}
     </div>
   );
 }
@@ -481,46 +471,100 @@ function ProjectMiniLink({
   );
 }
 
-function SyllabusRow({
-  item,
+function MilestoneGroup({
+  milestone,
   projects,
-  onToggle,
-  onSetProject,
+  onToggleMilestone,
+  onSetMilestoneProject,
+  onToggleItem,
+  onAddItem,
+  onSetItemDetails,
+  onSetItemProject,
 }: {
-  item: SyllabusItem;
+  milestone: SkillMilestone;
   projects: Project[];
-  onToggle: () => void;
-  onSetProject: (ref: LinkRef | null) => void;
+  onToggleMilestone: () => void;
+  onSetMilestoneProject: (ref: LinkRef | null) => void;
+  onToggleItem: (itemId: string) => void;
+  onAddItem: (title: string) => void;
+  onSetItemDetails: (itemId: string, details: string) => void;
+  onSetItemProject: (itemId: string, ref: LinkRef | null) => void;
 }) {
+  const doneCount = milestone.syllabus.filter((i) => i.done).length;
+
   return (
-    <div className="skill-list-row">
-      <label className="task-checklist-item" style={{ flex: 1 }}>
-        <input type="checkbox" checked={item.done} onChange={onToggle} />
-        <span className={item.done ? 'task-done' : ''}>{item.title}</span>
-      </label>
-      <ProjectMiniLink projectRef={item.projectRef} projects={projects} onSetProject={onSetProject} />
+    <div className="milestone-group">
+      <div className="skill-list-row milestone-group-header">
+        <label className="task-checklist-item" style={{ flex: 1 }}>
+          <input type="checkbox" checked={milestone.done} onChange={onToggleMilestone} />
+          <span className={milestone.done ? 'task-done' : ''}>{milestone.title}</span>
+          {milestone.syllabus.length > 0 && (
+            <span className="milestone-count">{doneCount}/{milestone.syllabus.length}</span>
+          )}
+        </label>
+        <ProjectMiniLink projectRef={milestone.projectRef} projects={projects} onSetProject={onSetMilestoneProject} />
+      </div>
+
+      <div className="milestone-syllabus">
+        {milestone.syllabus.map((item) => (
+          <SyllabusPointRow
+            key={item.id}
+            item={item}
+            projects={projects}
+            onToggle={() => onToggleItem(item.id)}
+            onSetDetails={(details) => onSetItemDetails(item.id, details)}
+            onSetProject={(ref) => onSetItemProject(item.id, ref)}
+          />
+        ))}
+        <InlineAddRow placeholder="Add a point/task to this milestone…" onAdd={onAddItem} />
+      </div>
     </div>
   );
 }
 
-function MilestoneRow({
-  milestone,
+function SyllabusPointRow({
+  item,
   projects,
   onToggle,
+  onSetDetails,
   onSetProject,
 }: {
-  milestone: SkillMilestone;
+  item: { id: string; title: string; details: string; done: boolean; projectRef: LinkRef | null };
   projects: Project[];
   onToggle: () => void;
+  onSetDetails: (details: string) => void;
   onSetProject: (ref: LinkRef | null) => void;
 }) {
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [draft, setDraft] = useState(item.details);
+
+  function save() {
+    onSetDetails(draft.trim());
+    setEditingDetails(false);
+  }
+
   return (
-    <div className="skill-list-row">
-      <label className="task-checklist-item" style={{ flex: 1 }}>
-        <input type="checkbox" checked={milestone.done} onChange={onToggle} />
-        <span className={milestone.done ? 'task-done' : ''}>{milestone.title}</span>
-      </label>
-      <ProjectMiniLink projectRef={milestone.projectRef} projects={projects} onSetProject={onSetProject} />
+    <div className="syllabus-point">
+      <div className="skill-list-row">
+        <label className="task-checklist-item" style={{ flex: 1 }}>
+          <input type="checkbox" checked={item.done} onChange={onToggle} />
+          <span className={item.done ? 'task-done' : ''}>{item.title}</span>
+        </label>
+        <ProjectMiniLink projectRef={item.projectRef} projects={projects} onSetProject={onSetProject} />
+      </div>
+      {editingDetails ? (
+        <div className="syllabus-point-details-edit">
+          <textarea rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus />
+          <div className="modal-actions" style={{ marginTop: 6 }}>
+            <button type="button" className="modal-cancel" onClick={() => setEditingDetails(false)}>Cancel</button>
+            <button type="button" className="auth-submit" onClick={save}>Save</button>
+          </div>
+        </div>
+      ) : (
+        <p className="syllabus-point-details" onClick={() => { setDraft(item.details); setEditingDetails(true); }}>
+          {item.details || 'Add details…'}
+        </p>
+      )}
     </div>
   );
 }

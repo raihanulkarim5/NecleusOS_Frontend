@@ -9,13 +9,15 @@ export interface SkillService {
   createSkill(draft: SkillDraft): Promise<Skill>;
   updateDescription(id: string, description: string): Promise<Skill>;
 
-  toggleSyllabusItem(skillId: string, itemId: string): Promise<Skill>;
-  addSyllabusItem(skillId: string, title: string): Promise<Skill>;
-  setSyllabusItemProject(skillId: string, itemId: string, projectRef: LinkRef | null): Promise<Skill>;
-
   toggleMilestone(skillId: string, milestoneId: string): Promise<Skill>;
   addMilestone(skillId: string, title: string): Promise<Skill>;
   setMilestoneProject(skillId: string, milestoneId: string, projectRef: LinkRef | null): Promise<Skill>;
+
+  // Syllabus points/tasks live inside a milestone.
+  toggleSyllabusItem(skillId: string, milestoneId: string, itemId: string): Promise<Skill>;
+  addSyllabusItem(skillId: string, milestoneId: string, title: string): Promise<Skill>;
+  updateSyllabusItemDetails(skillId: string, milestoneId: string, itemId: string, details: string): Promise<Skill>;
+  setSyllabusItemProject(skillId: string, milestoneId: string, itemId: string, projectRef: LinkRef | null): Promise<Skill>;
 
   addResource(skillId: string, title: string, url: string, type: 'Link' | 'PDF', isUpload: boolean): Promise<Skill>;
   addCourse(skillId: string, title: string, provider: string, url: string): Promise<Skill>;

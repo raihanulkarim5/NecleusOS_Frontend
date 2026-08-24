@@ -2,9 +2,13 @@ import type { LinkRef } from './link';
 
 export type SkillStatus = 'Not Started' | 'In Progress' | 'Completed';
 
+// A syllabus item is now a point/task that lives inside a milestone,
+// rather than a separate flat list — one milestone groups several
+// roadmap steps, each with its own detail text.
 export interface SyllabusItem {
   id: string;
   title: string;
+  details: string;
   done: boolean;
   projectRef: LinkRef | null;
 }
@@ -35,6 +39,7 @@ export interface SkillMilestone {
   title: string;
   done: boolean;
   projectRef: LinkRef | null;
+  syllabus: SyllabusItem[];
 }
 
 // A Roadmap is a distinct entity from a skill's own syllabus — it's a
@@ -63,7 +68,6 @@ export interface Skill {
   status: SkillStatus;
   progressPercent: number;
   roadmapId: string | null;
-  syllabus: SyllabusItem[];
   resources: SkillResource[];
   courses: SkillCourse[];
   videos: SkillVideo[];

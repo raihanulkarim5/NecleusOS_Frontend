@@ -1841,3 +1841,59 @@ select optgroup {
 }
 
 .rich-editor-content ul, .rich-editor-content ol { padding-left: 20px; }
+
+/* Milestone group with nested syllabus points */
+.milestone-group {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.milestone-group-header { margin-bottom: 10px; }
+
+.milestone-count {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-left: 6px;
+}
+
+.milestone-syllabus {
+  padding-left: 20px;
+  border-left: 2px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.syllabus-point { padding: 4px 0; }
+
+.syllabus-point-details {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 2px 0 0 26px;
+  cursor: pointer;
+  max-width: 480px;
+}
+
+.syllabus-point-details:hover { color: var(--ink); }
+
+.syllabus-point-details-edit {
+  margin: 4px 0 0 26px;
+  max-width: 480px;
+}
+
+.syllabus-point-details-edit textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 12px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}

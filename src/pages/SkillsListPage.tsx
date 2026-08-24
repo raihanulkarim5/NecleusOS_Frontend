@@ -159,7 +159,7 @@ export function SkillsListPage({ onOpenSkill }: SkillsListPageProps) {
 }
 
 function SkillListCard({ skill, onOpen }: { skill: Skill; onOpen: () => void }) {
-  const nextStep = skill.syllabus.find((s) => !s.done);
+  const nextStep = skill.milestones.flatMap((m) => m.syllabus).find((s) => !s.done);
   return (
     <div className="project-card skill-card" onClick={onOpen}>
       <div className="task-card-top">

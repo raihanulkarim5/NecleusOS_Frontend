@@ -58,32 +58,6 @@ export function useUpdateSkillDescription() {
   });
 }
 
-export function useToggleSyllabusItem() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ skillId, itemId }: { skillId: string; itemId: string }) =>
-      skillService.toggleSyllabusItem(skillId, itemId),
-    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
-  });
-}
-
-export function useAddSyllabusItem() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ skillId, title }: { skillId: string; title: string }) => skillService.addSyllabusItem(skillId, title),
-    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
-  });
-}
-
-export function useSetSyllabusItemProject() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ skillId, itemId, projectRef }: { skillId: string; itemId: string; projectRef: LinkRef | null }) =>
-      skillService.setSyllabusItemProject(skillId, itemId, projectRef),
-    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
-  });
-}
-
 export function useToggleSkillMilestone() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -106,6 +80,60 @@ export function useSetMilestoneProject() {
   return useMutation({
     mutationFn: ({ skillId, milestoneId, projectRef }: { skillId: string; milestoneId: string; projectRef: LinkRef | null }) =>
       skillService.setMilestoneProject(skillId, milestoneId, projectRef),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
+  });
+}
+
+export function useToggleSyllabusItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, milestoneId, itemId }: { skillId: string; milestoneId: string; itemId: string }) =>
+      skillService.toggleSyllabusItem(skillId, milestoneId, itemId),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
+  });
+}
+
+export function useAddSyllabusItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, milestoneId, title }: { skillId: string; milestoneId: string; title: string }) =>
+      skillService.addSyllabusItem(skillId, milestoneId, title),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
+  });
+}
+
+export function useUpdateSyllabusItemDetails() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      skillId,
+      milestoneId,
+      itemId,
+      details,
+    }: {
+      skillId: string;
+      milestoneId: string;
+      itemId: string;
+      details: string;
+    }) => skillService.updateSyllabusItemDetails(skillId, milestoneId, itemId, details),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
+  });
+}
+
+export function useSetSyllabusItemProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      skillId,
+      milestoneId,
+      itemId,
+      projectRef,
+    }: {
+      skillId: string;
+      milestoneId: string;
+      itemId: string;
+      projectRef: LinkRef | null;
+    }) => skillService.setSyllabusItemProject(skillId, milestoneId, itemId, projectRef),
     onSuccess: (updated) => applySkillUpdate(queryClient, updated),
   });
 }
