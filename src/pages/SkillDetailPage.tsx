@@ -17,8 +17,8 @@ import {
   useUpdateSkillDescription,
   useUpdateSkillNotes,
 } from '../hooks/useSkills';
-import { useTasks } from '../hooks/useTasks';
-import { useProjects } from '../hooks/useProjects';
+import { useCreateTask, useTasks } from '../hooks/useTasks';
+import { useCreateProject, useProjects } from '../hooks/useProjects';
 import { RichNotesEditor } from '../components/RichNotesEditor';
 import type { LinkRef } from '../types/link';
 import type { Skill, SkillMilestone, SyllabusItem } from '../types/skill';
@@ -127,8 +127,10 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   const addCourse = useAddCourse();
   const addVideo = useAddVideo();
   const addPracticeTask = useAddPracticeTask();
+  const createTask = useCreateTask();
   const linkProject = useLinkSkillProject();
   const unlinkProject = useUnlinkSkillProject();
+  const createProject = useCreateProject();
   const toggleFavorite = useToggleSkillFavorite();
   const updateNotes = useUpdateSkillNotes();
   const updateDescription = useUpdateSkillDescription();
@@ -302,18 +304,28 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
 
       {section === 'practice' && (
         <div className="stat-card">
-          {skill.practiceTasks.length === 0 && <p className="muted-text">No linked tasks.</p>}
+          {skill.practiceTasks.length === 0 && <p className="muted-text">No practice tasks yet.</p>}
           {skill.practiceTasks.map((t) => (
             <div className="project-link-badge" key={t.id} style={{ marginBottom: 6, display: 'inline-block' }}>
               {t.type}: {t.title}
             </div>
           ))}
-          {unlinkedTasks.length > 0 && (
-            <LinkTaskRow
-              tasks={unlinkedTasks}
-              onLink={(taskId, taskTitle) => addPracticeTask.mutate({ skillId: skill.id, taskId, taskTitle })}
-            />
-          )}
+          <PracticeTaskRow
+            existingTasks={unlinkedTasks}
+            onLinkExisting={(taskId, taskTitle) => addPracticeTask.mutate({ skillId: skill.id, taskId, taskTitle })}
+            onCreateNew={async (title) => {
+              const task = await createTask.mutateAsync({
+                title,
+                description: '',
+                priority: 'Medium',
+                dueDate: null,
+                tags: [],
+                effortEstimateHours: null,
+                recurring: 'None',
+              });
+              addPracticeTask.mutate({ skillId: skill.id, taskId: task.id, taskTitle: task.title });
+            }}
+          />
         </div>
       )}
 
@@ -352,13 +364,15 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
               );
             })}
           </div>
-          {skill.projects.length === 0 && <p className="muted-text">No linked projects.</p>}
-          {unlinkedProjects.length > 0 && (
-            <LinkProjectRow
-              projects={unlinkedProjects}
-              onLink={(ref) => linkProject.mutate({ skillId: skill.id, projectRef: ref })}
-            />
-          )}
+          {skill.projects.length === 0 && <p className="muted-text">No projects yet.</p>}
+          <LinkOrCreateProjectRow
+            existingProjects={unlinkedProjects}
+            onLinkExisting={(ref) => linkProject.mutate({ skillId: skill.id, projectRef: ref })}
+            onCreateNew={async (name) => {
+              const project = await createProject.mutateAsync({ name, description: '', tags: [] });
+              linkProject.mutate({ skillId: skill.id, projectRef: { type: 'project', id: project.id, title: project.name } });
+            }}
+          />
         </div>
       )}
 
@@ -630,52 +644,126 @@ function AddVideoRow({ onAdd }: { onAdd: (title: string, url: string) => void })
   );
 }
 
-function LinkTaskRow({
-  tasks,
-  onLink,
+function PracticeTaskRow({
+  existingTasks,
+  onLinkExisting,
+  onCreateNew,
 }: {
-  tasks: { id: string; title: string }[];
-  onLink: (taskId: string, taskTitle: string) => void;
+  existingTasks: { id: string; title: string }[];
+  onLinkExisting: (taskId: string, taskTitle: string) => void;
+  onCreateNew: (title: string) => Promise<void>;
 }) {
+  const [mode, setMode] = useState<'existing' | 'new'>('new');
   const [taskId, setTaskId] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [creating, setCreating] = useState(false);
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task) return;
-    onLink(task.id, task.title);
-    setTaskId('');
+    if (mode === 'existing') {
+      const task = existingTasks.find((t) => t.id === taskId);
+      if (!task) return;
+      onLinkExisting(task.id, task.title);
+      setTaskId('');
+    } else {
+      if (!newTitle.trim()) return;
+      setCreating(true);
+      onCreateNew(newTitle.trim()).finally(() => {
+        setCreating(false);
+        setNewTitle('');
+      });
+    }
   }
+
   return (
-    <form className="inline-add-row" onSubmit={handleSubmit}>
-      <select value={taskId} onChange={(e) => setTaskId(e.target.value)}>
-        <option value="">Link a task…</option>
-        {tasks.map((t) => (
-          <option key={t.id} value={t.id}>{t.title}</option>
-        ))}
-      </select>
-      <button type="submit" disabled={!taskId}>+ Link</button>
+    <form className="inline-add-row" style={{ flexDirection: 'column', alignItems: 'stretch' }} onSubmit={handleSubmit}>
+      <div className="skill-resource-mode-toggle">
+        <button type="button" className={mode === 'new' ? 'active' : ''} onClick={() => setMode('new')}>Create new task</button>
+        <button type="button" className={mode === 'existing' ? 'active' : ''} onClick={() => setMode('existing')}>Link existing</button>
+      </div>
+      {mode === 'new' ? (
+        <div className="inline-add-row" style={{ marginTop: 8 }}>
+          <input
+            type="text"
+            placeholder="New task title… (also appears in Tasks)"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+          />
+          <button type="submit" disabled={!newTitle.trim() || creating}>{creating ? 'Creating…' : '+ Create'}</button>
+        </div>
+      ) : (
+        <div className="inline-add-row" style={{ marginTop: 8 }}>
+          <select value={taskId} onChange={(e) => setTaskId(e.target.value)}>
+            <option value="">Choose an existing task…</option>
+            {existingTasks.map((t) => (
+              <option key={t.id} value={t.id}>{t.title}</option>
+            ))}
+          </select>
+          <button type="submit" disabled={!taskId}>+ Link</button>
+        </div>
+      )}
     </form>
   );
 }
 
-function LinkProjectRow({ projects, onLink }: { projects: Project[]; onLink: (ref: LinkRef) => void }) {
+function LinkOrCreateProjectRow({
+  existingProjects,
+  onLinkExisting,
+  onCreateNew,
+}: {
+  existingProjects: Project[];
+  onLinkExisting: (ref: LinkRef) => void;
+  onCreateNew: (name: string) => Promise<void>;
+}) {
+  const [mode, setMode] = useState<'existing' | 'new'>('new');
   const [projectId, setProjectId] = useState('');
+  const [newName, setNewName] = useState('');
+  const [creating, setCreating] = useState(false);
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const project = projects.find((p) => p.id === projectId);
-    if (!project) return;
-    onLink({ type: 'project', id: project.id, title: project.name });
-    setProjectId('');
+    if (mode === 'existing') {
+      const project = existingProjects.find((p) => p.id === projectId);
+      if (!project) return;
+      onLinkExisting({ type: 'project', id: project.id, title: project.name });
+      setProjectId('');
+    } else {
+      if (!newName.trim()) return;
+      setCreating(true);
+      onCreateNew(newName.trim()).finally(() => {
+        setCreating(false);
+        setNewName('');
+      });
+    }
   }
+
   return (
-    <form className="inline-add-row" onSubmit={handleSubmit} style={{ marginTop: 12 }}>
-      <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-        <option value="">Link a project…</option>
-        {projects.map((p) => (
-          <option key={p.id} value={p.id}>{p.name}</option>
-        ))}
-      </select>
-      <button type="submit" disabled={!projectId}>+ Link</button>
+    <form className="inline-add-row" style={{ flexDirection: 'column', alignItems: 'stretch', marginTop: 12 }} onSubmit={handleSubmit}>
+      <div className="skill-resource-mode-toggle">
+        <button type="button" className={mode === 'new' ? 'active' : ''} onClick={() => setMode('new')}>Create new project</button>
+        <button type="button" className={mode === 'existing' ? 'active' : ''} onClick={() => setMode('existing')}>Link existing</button>
+      </div>
+      {mode === 'new' ? (
+        <div className="inline-add-row" style={{ marginTop: 8 }}>
+          <input
+            type="text"
+            placeholder="New project name… (also appears in Projects)"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+          />
+          <button type="submit" disabled={!newName.trim() || creating}>{creating ? 'Creating…' : '+ Create'}</button>
+        </div>
+      ) : (
+        <div className="inline-add-row" style={{ marginTop: 8 }}>
+          <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+            <option value="">Choose an existing project…</option>
+            {existingProjects.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <button type="submit" disabled={!projectId}>+ Link</button>
+        </div>
+      )}
     </form>
   );
 }
