@@ -1624,3 +1624,220 @@ body {
   color: var(--cyan);
   margin: 6px 0 0;
 }
+
+/* Modal textarea fields (reuses .field from auth styles) */
+.modal .field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.modal .field textarea:focus { border-color: var(--violet); }
+
+/* Global dropdown fix: native option popups otherwise render with a
+   browser-default white background, making light-on-dark text invisible. */
+select {
+  background-color: #12132e;
+  color: var(--ink);
+}
+
+select option,
+select optgroup {
+  background-color: #12132e;
+  color: var(--ink);
+}
+
+/* Skill detail: description, progress-under-header, mini project links */
+.skill-brief {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 6px 0 10px;
+  cursor: pointer;
+  max-width: 640px;
+}
+
+.skill-brief:hover { color: var(--ink); }
+
+.skill-description-edit textarea {
+  width: 100%;
+  max-width: 480px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.skill-progress-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 320px;
+  margin-top: 4px;
+}
+
+.skill-progress-inline .bar-track { flex: 1; margin-top: 0; }
+.skill-progress-label { font-size: 12px; color: var(--cyan); font-family: 'IBM Plex Mono', monospace; }
+
+.skill-list-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.skill-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--violet);
+  background: rgba(139, 92, 246, 0.14);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.skill-mini-badge button {
+  background: none;
+  border: none;
+  color: var(--violet);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0;
+}
+
+.skill-mini-link-btn {
+  background: none;
+  border: 1px dashed var(--card-border);
+  color: var(--muted);
+  font-size: 11px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.skill-mini-picker {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.skill-mini-picker select {
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--card-border);
+}
+
+.skill-mini-picker button {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(139, 92, 246, 0.18);
+  color: var(--violet);
+  cursor: pointer;
+}
+
+.skill-mini-picker button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.skill-upload-tag {
+  font-size: 10px;
+  color: var(--cyan);
+  background: rgba(56, 189, 248, 0.12);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.skill-unlink-btn {
+  background: none;
+  border: 1px solid var(--card-border);
+  color: var(--muted);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.skill-resource-mode-toggle { display: flex; gap: 4px; }
+
+.skill-resource-mode-toggle button {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.skill-resource-mode-toggle button.active {
+  background: rgba(139, 92, 246, 0.16);
+  color: var(--violet);
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.inline-add-row input[type="file"] {
+  font-size: 12px;
+  color: var(--muted);
+  flex: 1;
+}
+
+/* Rich notes editor */
+.rich-editor {
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+.rich-editor-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.rich-editor-toolbar button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.rich-editor-toolbar button:hover { border-color: var(--violet); }
+
+.rich-editor-content {
+  min-height: 160px;
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  line-height: 1.6;
+}
+
+.rich-editor-content:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+}
+
+.rich-editor-content ul, .rich-editor-content ol { padding-left: 20px; }

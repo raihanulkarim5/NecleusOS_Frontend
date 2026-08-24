@@ -6,6 +6,7 @@ export interface SyllabusItem {
   id: string;
   title: string;
   done: boolean;
+  projectRef: LinkRef | null;
 }
 
 export interface SkillResource {
@@ -13,6 +14,7 @@ export interface SkillResource {
   title: string;
   url: string;
   type: 'Link' | 'PDF';
+  isUpload: boolean; // true when url is a local blob URL from a file upload rather than an external link
 }
 
 export interface SkillCourse {
@@ -32,6 +34,7 @@ export interface SkillMilestone {
   id: string;
   title: string;
   done: boolean;
+  projectRef: LinkRef | null;
 }
 
 // A Roadmap is a distinct entity from a skill's own syllabus — it's a
@@ -55,6 +58,7 @@ export interface RoadmapDraft {
 export interface Skill {
   id: string;
   name: string;
+  description: string;
   category: string;
   status: SkillStatus;
   progressPercent: number;
@@ -64,7 +68,7 @@ export interface Skill {
   courses: SkillCourse[];
   videos: SkillVideo[];
   practiceTasks: LinkRef[];
-  notes: string;
+  notes: string; // stores HTML from the rich notes editor
   projects: LinkRef[];
   milestones: SkillMilestone[];
   tags: string[];
@@ -75,6 +79,7 @@ export interface Skill {
 
 export interface SkillDraft {
   name: string;
+  description: string;
   category: string;
   roadmapId: string | null;
   tags: string[];

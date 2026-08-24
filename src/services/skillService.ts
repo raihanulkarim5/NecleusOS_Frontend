@@ -1,3 +1,4 @@
+import type { LinkRef } from '../types/link';
 import type { RoadmapDraft, Skill, SkillDraft, SkillRoadmap } from '../types/skill';
 
 export interface SkillService {
@@ -6,14 +7,24 @@ export interface SkillService {
   getRoadmaps(): Promise<SkillRoadmap[]>;
   createRoadmap(draft: RoadmapDraft): Promise<SkillRoadmap>;
   createSkill(draft: SkillDraft): Promise<Skill>;
+  updateDescription(id: string, description: string): Promise<Skill>;
+
   toggleSyllabusItem(skillId: string, itemId: string): Promise<Skill>;
   addSyllabusItem(skillId: string, title: string): Promise<Skill>;
+  setSyllabusItemProject(skillId: string, itemId: string, projectRef: LinkRef | null): Promise<Skill>;
+
   toggleMilestone(skillId: string, milestoneId: string): Promise<Skill>;
   addMilestone(skillId: string, title: string): Promise<Skill>;
-  addResource(skillId: string, title: string, url: string, type: 'Link' | 'PDF'): Promise<Skill>;
+  setMilestoneProject(skillId: string, milestoneId: string, projectRef: LinkRef | null): Promise<Skill>;
+
+  addResource(skillId: string, title: string, url: string, type: 'Link' | 'PDF', isUpload: boolean): Promise<Skill>;
   addCourse(skillId: string, title: string, provider: string, url: string): Promise<Skill>;
   addVideo(skillId: string, title: string, url: string): Promise<Skill>;
   addPracticeTask(skillId: string, taskId: string, taskTitle: string): Promise<Skill>;
+
+  linkProject(skillId: string, projectRef: LinkRef): Promise<Skill>;
+  unlinkProject(skillId: string, projectId: string): Promise<Skill>;
+
   toggleFavorite(id: string): Promise<Skill>;
   updateNotes(id: string, notes: string): Promise<Skill>;
 }

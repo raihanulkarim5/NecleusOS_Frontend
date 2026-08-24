@@ -166,6 +166,7 @@ function SkillListCard({ skill, onOpen }: { skill: Skill; onOpen: () => void }) 
         <span className="project-card-title">{skill.name}</span>
         <span className="entry-type-badge">{skill.category}</span>
       </div>
+      {skill.description && <p className="entry-desc">{skill.description}</p>}
       <div className="project-progress">
         <div className="budget-row-top">
           <span className="budget-cat">{skill.status}</span>
@@ -241,6 +242,7 @@ function AddSkillModal({
   const createRoadmap = useCreateRoadmap();
 
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [roadmapId, setRoadmapId] = useState('');
   const [tags, setTags] = useState('');
@@ -252,6 +254,7 @@ function AddSkillModal({
     if (!name.trim()) return;
     onSubmit({
       name: name.trim(),
+      description: description.trim(),
       category: category.trim() || 'General',
       roadmapId: roadmapId || null,
       tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
@@ -274,6 +277,16 @@ function AddSkillModal({
           <div className="field">
             <label htmlFor="skill-name">Name</label>
             <input id="skill-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+          </div>
+          <div className="field">
+            <label htmlFor="skill-description">Brief description (optional)</label>
+            <textarea
+              id="skill-description"
+              rows={2}
+              placeholder="What is this skill and why does it matter to you?"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
           <div className="field">
             <label htmlFor="skill-category">Category</label>

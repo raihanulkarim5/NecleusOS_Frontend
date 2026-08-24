@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { skillService } from '../services';
-import type { RoadmapDraft, SkillDraft } from '../types/skill';
+import type { LinkRef } from '../types/link';
+import type { RoadmapDraft, Skill, SkillDraft } from '../types/skill';
 
 export function useSkills() {
   return useQuery({ queryKey: ['skills'], queryFn: () => skillService.getSkills() });
@@ -37,15 +38,32 @@ export function useCreateSkill() {
   });
 }
 
+// Every mutation below writes the updated Skill straight into both the
+// detail cache (['skill', id]) and the list cache (['skills']) instead of
+// just invalidating and waiting on a second round-trip — this is what
+// makes toggles and adds feel instant rather than laggy.
+function applySkillUpdate(queryClient: ReturnType<typeof useQueryClient>, updated: Skill) {
+  queryClient.setQueryData(['skill', updated.id], updated);
+  queryClient.setQueryData(['skills'], (old: Skill[] | undefined) =>
+    old ? old.map((s) => (s.id === updated.id ? updated : s)) : old,
+  );
+}
+
+export function useUpdateSkillDescription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, description }: { id: string; description: string }) =>
+      skillService.updateDescription(id, description),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
+  });
+}
+
 export function useToggleSyllabusItem() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ skillId, itemId }: { skillId: string; itemId: string }) =>
       skillService.toggleSyllabusItem(skillId, itemId),
-    onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['skills'] });
-      queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] });
-    },
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
   });
 }
 
@@ -53,10 +71,16 @@ export function useAddSyllabusItem() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ skillId, title }: { skillId: string; title: string }) => skillService.addSyllabusItem(skillId, title),
-    onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['skills'] });
-      queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] });
-    },
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
+  });
+}
+
+export function useSetSyllabusItemProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, itemId, projectRef }: { skillId: string; itemId: string; projectRef: LinkRef | null }) =>
+      skillService.setSyllabusItemProject(skillId, itemId, projectRef),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
   });
 }
 
@@ -65,10 +89,7 @@ export function useToggleSkillMilestone() {
   return useMutation({
     mutationFn: ({ skillId, milestoneId }: { skillId: string; milestoneId: string }) =>
       skillService.toggleMilestone(skillId, milestoneId),
-    onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['skills'] });
-      queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] });
-    },
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
   });
 }
 
@@ -76,19 +97,36 @@ export function useAddMilestone() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ skillId, title }: { skillId: string; title: string }) => skillService.addMilestone(skillId, title),
-    onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['skills'] });
-      queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] });
-    },
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
+  });
+}
+
+export function useSetMilestoneProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, milestoneId, projectRef }: { skillId: string; milestoneId: string; projectRef: LinkRef | null }) =>
+      skillService.setMilestoneProject(skillId, milestoneId, projectRef),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
   });
 }
 
 export function useAddResource() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ skillId, title, url, type }: { skillId: string; title: string; url: string; type: 'Link' | 'PDF' }) =>
-      skillService.addResource(skillId, title, url, type),
-    onSuccess: (_data, vars) => queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] }),
+    mutationFn: ({
+      skillId,
+      title,
+      url,
+      type,
+      isUpload,
+    }: {
+      skillId: string;
+      title: string;
+      url: string;
+      type: 'Link' | 'PDF';
+      isUpload: boolean;
+    }) => skillService.addResource(skillId, title, url, type, isUpload),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
   });
 }
 
@@ -97,7 +135,7 @@ export function useAddCourse() {
   return useMutation({
     mutationFn: ({ skillId, title, provider, url }: { skillId: string; title: string; provider: string; url: string }) =>
       skillService.addCourse(skillId, title, provider, url),
-    onSuccess: (_data, vars) => queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] }),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
   });
 }
 
@@ -106,7 +144,7 @@ export function useAddVideo() {
   return useMutation({
     mutationFn: ({ skillId, title, url }: { skillId: string; title: string; url: string }) =>
       skillService.addVideo(skillId, title, url),
-    onSuccess: (_data, vars) => queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] }),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
   });
 }
 
@@ -115,7 +153,25 @@ export function useAddPracticeTask() {
   return useMutation({
     mutationFn: ({ skillId, taskId, taskTitle }: { skillId: string; taskId: string; taskTitle: string }) =>
       skillService.addPracticeTask(skillId, taskId, taskTitle),
-    onSuccess: (_data, vars) => queryClient.invalidateQueries({ queryKey: ['skill', vars.skillId] }),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
+  });
+}
+
+export function useLinkSkillProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, projectRef }: { skillId: string; projectRef: LinkRef }) =>
+      skillService.linkProject(skillId, projectRef),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
+  });
+}
+
+export function useUnlinkSkillProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skillId, projectId }: { skillId: string; projectId: string }) =>
+      skillService.unlinkProject(skillId, projectId),
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
   });
 }
 
@@ -123,10 +179,7 @@ export function useToggleSkillFavorite() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => skillService.toggleFavorite(id),
-    onSuccess: (_data, id) => {
-      queryClient.invalidateQueries({ queryKey: ['skills'] });
-      queryClient.invalidateQueries({ queryKey: ['skill', id] });
-    },
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
   });
 }
 
@@ -134,8 +187,6 @@ export function useUpdateSkillNotes() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, notes }: { id: string; notes: string }) => skillService.updateNotes(id, notes),
-    onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['skill', vars.id] });
-    },
+    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
   });
 }
