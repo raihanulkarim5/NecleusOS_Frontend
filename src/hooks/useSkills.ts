@@ -49,13 +49,22 @@ function applySkillUpdate(queryClient: ReturnType<typeof useQueryClient>, update
   );
 }
 
-export function useUpdateSkillDescription() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, description }: { id: string; description: string }) =>
-      skillService.updateDescription(id, description),
-    onSuccess: (updated) => applySkillUpdate(queryClient, updated),
-  });
+export function useUpdateSkillBasicInfo() {
+  return useSkillMutation(
+    ({
+      id,
+      name,
+      category,
+      status,
+      description,
+    }: {
+      id: string;
+      name: string;
+      category: string;
+      status: Skill['status'];
+      description: string;
+    }) => skillService.updateBasicInfo(id, { name, category, status, description }),
+  );
 }
 
 // Generic factory: every skill sub-mutation follows the same shape
@@ -84,6 +93,13 @@ export function useAddMilestone() {
 export function useRemoveMilestone() {
   return useSkillMutation(({ skillId, milestoneId }: { skillId: string; milestoneId: string }) =>
     skillService.removeMilestone(skillId, milestoneId),
+  );
+}
+
+export function useMoveMilestone() {
+  return useSkillMutation(
+    ({ skillId, milestoneId, direction }: { skillId: string; milestoneId: string; direction: 'up' | 'down' }) =>
+      skillService.moveMilestone(skillId, milestoneId, direction),
   );
 }
 
@@ -116,6 +132,22 @@ export function useAddSyllabusItem() {
 export function useRemoveSyllabusItem() {
   return useSkillMutation(({ skillId, milestoneId, itemId }: { skillId: string; milestoneId: string; itemId: string }) =>
     skillService.removeSyllabusItem(skillId, milestoneId, itemId),
+  );
+}
+
+export function useMoveSyllabusItem() {
+  return useSkillMutation(
+    ({
+      skillId,
+      milestoneId,
+      itemId,
+      direction,
+    }: {
+      skillId: string;
+      milestoneId: string;
+      itemId: string;
+      direction: 'up' | 'down';
+    }) => skillService.moveSyllabusItem(skillId, milestoneId, itemId, direction),
   );
 }
 
@@ -225,6 +257,13 @@ export function useAddPracticeTask() {
 export function useRemovePracticeTask() {
   return useSkillMutation(({ skillId, taskId }: { skillId: string; taskId: string }) =>
     skillService.removePracticeTask(skillId, taskId),
+  );
+}
+
+export function useMovePracticeTask() {
+  return useSkillMutation(
+    ({ skillId, taskId, direction }: { skillId: string; taskId: string; direction: 'up' | 'down' }) =>
+      skillService.movePracticeTask(skillId, taskId, direction),
   );
 }
 

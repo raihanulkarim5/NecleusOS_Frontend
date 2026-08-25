@@ -9,6 +9,9 @@ import {
   useAddSyllabusItem,
   useAddVideo,
   useLinkSkillProject,
+  useMoveMilestone,
+  useMovePracticeTask,
+  useMoveSyllabusItem,
   useRemoveCourse,
   useRemoveMilestone,
   useRemovePracticeTask,
@@ -22,15 +25,15 @@ import {
   useToggleSkillMilestone,
   useToggleSyllabusItem,
   useUnlinkSkillProject,
-  useUpdateSkillDescription,
+  useUpdateSkillBasicInfo,
   useUpdateSkillNotes,
   useUpdateSyllabusItemDetails,
 } from '../hooks/useSkills';
 import { useCreateTask, useTasks, useUpdateTaskStatus } from '../hooks/useTasks';
-import { useCreateProject, useProjects } from '../hooks/useProjects';
+import { useCreateProject, useProjects, useToggleMilestone as useToggleProjectMilestone } from '../hooks/useProjects';
 import { RichNotesEditor } from '../components/RichNotesEditor';
 import type { LinkRef } from '../types/link';
-import type { Skill, SkillMilestone } from '../types/skill';
+import type { Skill, SkillMilestone, SkillStatus } from '../types/skill';
 import type { Project } from '../types/project';
 
 interface SkillDetailPageProps {
@@ -128,12 +131,14 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   const toggleSyllabusItem = useToggleSyllabusItem();
   const addSyllabusItem = useAddSyllabusItem();
   const removeSyllabusItem = useRemoveSyllabusItem();
+  const moveSyllabusItem = useMoveSyllabusItem();
   const addProjectToSyllabusItem = useAddProjectToSyllabusItem();
   const removeProjectFromSyllabusItem = useRemoveProjectFromSyllabusItem();
   const updateSyllabusItemDetails = useUpdateSyllabusItemDetails();
   const toggleMilestone = useToggleSkillMilestone();
   const addMilestone = useAddMilestone();
   const removeMilestone = useRemoveMilestone();
+  const moveMilestone = useMoveMilestone();
   const addProjectToMilestone = useAddProjectToMilestone();
   const removeProjectFromMilestone = useRemoveProjectFromMilestone();
   const addResource = useAddResource();
@@ -144,19 +149,24 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   const removeVideo = useRemoveVideo();
   const addPracticeTask = useAddPracticeTask();
   const removePracticeTask = useRemovePracticeTask();
+  const movePracticeTask = useMovePracticeTask();
   const createTask = useCreateTask();
   const updateTaskStatus = useUpdateTaskStatus();
   const linkProject = useLinkSkillProject();
   const unlinkProject = useUnlinkSkillProject();
   const createProject = useCreateProject();
+  const toggleProjectMilestone = useToggleProjectMilestone();
   const toggleFavorite = useToggleSkillFavorite();
   const updateNotes = useUpdateSkillNotes();
-  const updateDescription = useUpdateSkillDescription();
+  const updateBasicInfo = useUpdateSkillBasicInfo();
   const { data: tasks } = useTasks();
   const { data: allProjects } = useProjects();
 
   const [section, setSection] = useState<SectionKey>('overview');
-  const [editingDescription, setEditingDescription] = useState(false);
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const [categoryDraft, setCategoryDraft] = useState('');
+  const [statusDraft, setStatusDraft] = useState<SkillStatus>('Not Started');
   const [descriptionDraft, setDescriptionDraft] = useState('');
 
   if (isLoading || !skill) {
@@ -171,14 +181,24 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   const projectById = new Map((allProjects ?? []).map((p) => [p.id, p]));
   const nextStep = skill.milestones.flatMap((m) => m.syllabus).find((s) => !s.done);
 
-  function startEditingDescription() {
+  function startEditingInfo() {
+    setNameDraft(skill!.name);
+    setCategoryDraft(skill!.category);
+    setStatusDraft(skill!.status);
     setDescriptionDraft(skill!.description);
-    setEditingDescription(true);
+    setEditingInfo(true);
   }
 
-  function saveDescription() {
-    updateDescription.mutate({ id: skill!.id, description: descriptionDraft.trim() });
-    setEditingDescription(false);
+  function saveInfo() {
+    if (!nameDraft.trim()) return;
+    updateBasicInfo.mutate({
+      id: skill!.id,
+      name: nameDraft.trim(),
+      category: categoryDraft.trim() || 'General',
+      status: statusDraft,
+      description: descriptionDraft.trim(),
+    });
+    setEditingInfo(false);
   }
 
   return (
@@ -191,26 +211,47 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
 
       <div className="skill-detail-header">
         <div style={{ flex: 1 }}>
-          <h1 className="page-title">{skill.name}</h1>
-          <p className="page-date">{skill.category} · {skill.status}</p>
-
-          {editingDescription ? (
-            <div className="skill-description-edit">
-              <textarea
-                rows={2}
-                value={descriptionDraft}
-                onChange={(e) => setDescriptionDraft(e.target.value)}
+          {editingInfo ? (
+            <div className="skill-info-edit">
+              <input
+                type="text"
+                className="skill-info-name-input"
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
                 autoFocus
               />
+              <div className="skill-info-edit-row">
+                <input
+                  type="text"
+                  placeholder="Category"
+                  value={categoryDraft}
+                  onChange={(e) => setCategoryDraft(e.target.value)}
+                />
+                <select value={statusDraft} onChange={(e) => setStatusDraft(e.target.value as SkillStatus)}>
+                  <option value="Not Started">Not Started</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+              <textarea
+                rows={2}
+                placeholder="Brief description…"
+                value={descriptionDraft}
+                onChange={(e) => setDescriptionDraft(e.target.value)}
+              />
               <div className="modal-actions" style={{ marginTop: 6 }}>
-                <button type="button" className="modal-cancel" onClick={() => setEditingDescription(false)}>Cancel</button>
-                <button type="button" className="auth-submit" onClick={saveDescription}>Save</button>
+                <button type="button" className="modal-cancel" onClick={() => setEditingInfo(false)}>Cancel</button>
+                <button type="button" className="auth-submit" onClick={saveInfo}>Save</button>
               </div>
             </div>
           ) : (
-            <p className="skill-brief" onClick={startEditingDescription}>
-              {skill.description || 'No description yet — click to add one.'}
-            </p>
+            <div onClick={startEditingInfo} className="skill-info-display">
+              <h1 className="page-title">{skill.name}</h1>
+              <p className="page-date">{skill.category} · {skill.status} <span className="skill-edit-hint">(click to edit)</span></p>
+              <p className="skill-brief">
+                {skill.description || 'No description yet — click to add one.'}
+              </p>
+            </div>
           )}
 
           <div className="skill-progress-inline">
@@ -255,11 +296,15 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
           />
           {skill.milestones.length === 0 && <p className="muted-text" style={{ marginTop: 10 }}>No milestones yet.</p>}
           <div style={{ marginTop: 12 }}>
-            {skill.milestones.map((m) => (
+            {skill.milestones.map((m, index) => (
               <MilestoneGroup
                 key={m.id}
                 milestone={m}
                 projects={allProjects ?? []}
+                canMoveUp={index > 0}
+                canMoveDown={index < skill.milestones.length - 1}
+                onMoveUp={() => moveMilestone.mutate({ skillId: skill.id, milestoneId: m.id, direction: 'up' })}
+                onMoveDown={() => moveMilestone.mutate({ skillId: skill.id, milestoneId: m.id, direction: 'down' })}
                 onToggleMilestone={() => toggleMilestone.mutate({ skillId: skill.id, milestoneId: m.id })}
                 onRemoveMilestone={() => removeMilestone.mutate({ skillId: skill.id, milestoneId: m.id })}
                 onAddMilestoneProject={(ref) => addProjectToMilestone.mutate({ skillId: skill.id, milestoneId: m.id, projectRef: ref })}
@@ -269,6 +314,7 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
                 onToggleItem={(itemId) => toggleSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, itemId })}
                 onAddItem={(title) => addSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, title })}
                 onRemoveItem={(itemId) => removeSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, itemId })}
+                onMoveItem={(itemId, direction) => moveSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, itemId, direction })}
                 onSetItemDetails={(itemId, details) =>
                   updateSyllabusItemDetails.mutate({ skillId: skill.id, milestoneId: m.id, itemId, details })
                 }
@@ -286,7 +332,12 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
 
       {section === 'resources' && (
         <div className="stat-card">
-          {skill.resources.length === 0 && <p className="muted-text">No resources added.</p>}
+          <AddResourceRow
+            onAdd={(title, url, type, isUpload) =>
+              addResource.mutate({ skillId: skill.id, title, url, type, isUpload })
+            }
+          />
+          {skill.resources.length === 0 && <p className="muted-text" style={{ marginTop: 10 }}>No resources added.</p>}
           {skill.resources.map((r) => (
             <div className="skill-resource-row" key={r.id}>
               <span className="entry-type-badge">{r.type}</span>
@@ -299,17 +350,13 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
               <button className="skill-delete-btn" onClick={() => removeResource.mutate({ skillId: skill.id, resourceId: r.id })}>Remove</button>
             </div>
           ))}
-          <AddResourceRow
-            onAdd={(title, url, type, isUpload) =>
-              addResource.mutate({ skillId: skill.id, title, url, type, isUpload })
-            }
-          />
         </div>
       )}
 
       {section === 'courses' && (
         <div className="stat-card">
-          {skill.courses.length === 0 && <p className="muted-text">No courses added.</p>}
+          <AddCourseRow onAdd={(title, provider, url) => addCourse.mutate({ skillId: skill.id, title, provider, url })} />
+          {skill.courses.length === 0 && <p className="muted-text" style={{ marginTop: 10 }}>No courses added.</p>}
           {skill.courses.map((c) => (
             <div className="skill-resource-row" key={c.id}>
               {c.url && c.url !== '#' ? (
@@ -321,13 +368,13 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
               <button className="skill-delete-btn" onClick={() => removeCourse.mutate({ skillId: skill.id, courseId: c.id })}>Remove</button>
             </div>
           ))}
-          <AddCourseRow onAdd={(title, provider, url) => addCourse.mutate({ skillId: skill.id, title, provider, url })} />
         </div>
       )}
 
       {section === 'videos' && (
         <div className="stat-card">
-          {skill.videos.length === 0 && <p className="muted-text">No videos added.</p>}
+          <AddVideoRow onAdd={(title, url) => addVideo.mutate({ skillId: skill.id, title, url })} />
+          {skill.videos.length === 0 && <p className="muted-text" style={{ marginTop: 10 }}>No videos added.</p>}
           {skill.videos.map((v) => (
             <div className="skill-resource-row" key={v.id}>
               {v.url && v.url !== '#' ? (
@@ -338,33 +385,11 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
               <button className="skill-delete-btn" onClick={() => removeVideo.mutate({ skillId: skill.id, videoId: v.id })}>Remove</button>
             </div>
           ))}
-          <AddVideoRow onAdd={(title, url) => addVideo.mutate({ skillId: skill.id, title, url })} />
         </div>
       )}
 
       {section === 'practice' && (
         <div className="stat-card">
-          {skill.practiceTasks.length === 0 && <p className="muted-text">No practice tasks yet.</p>}
-          {skill.practiceTasks.map((t) => {
-            const task = linkedTaskObjects.find((task) => task.id === t.id);
-            const done = task?.status === 'Done';
-            return (
-              <div className="skill-resource-row" key={t.id}>
-                <label className="task-checklist-item" style={{ flex: 1 }}>
-                  <input
-                    type="checkbox"
-                    checked={done}
-                    onChange={() =>
-                      task && updateTaskStatus.mutate({ id: task.id, status: done ? 'Open' : 'Done' })
-                    }
-                  />
-                  <span className={done ? 'task-done' : ''}>{t.title}</span>
-                </label>
-                {task && <span className="entry-type-badge">{task.status}</span>}
-                <button className="skill-delete-btn" onClick={() => removePracticeTask.mutate({ skillId: skill.id, taskId: t.id })}>Remove</button>
-              </div>
-            );
-          })}
           <PracticeTaskRow
             existingTasks={unlinkedTasks}
             onLinkExisting={(taskId, taskTitle) => addPracticeTask.mutate({ skillId: skill.id, taskId, taskTitle })}
@@ -381,6 +406,33 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
               addPracticeTask.mutate({ skillId: skill.id, taskId: task.id, taskTitle: task.title });
             }}
           />
+          {skill.practiceTasks.length === 0 && <p className="muted-text" style={{ marginTop: 10 }}>No practice tasks yet.</p>}
+          {skill.practiceTasks.map((t, index) => {
+            const task = linkedTaskObjects.find((task) => task.id === t.id);
+            const done = task?.status === 'Done';
+            return (
+              <div className="skill-resource-row" key={t.id}>
+                <MoveButtons
+                  canMoveUp={index > 0}
+                  canMoveDown={index < skill.practiceTasks.length - 1}
+                  onMoveUp={() => movePracticeTask.mutate({ skillId: skill.id, taskId: t.id, direction: 'up' })}
+                  onMoveDown={() => movePracticeTask.mutate({ skillId: skill.id, taskId: t.id, direction: 'down' })}
+                />
+                <label className="task-checklist-item" style={{ flex: 1 }}>
+                  <input
+                    type="checkbox"
+                    checked={done}
+                    onChange={() =>
+                      task && updateTaskStatus.mutate({ id: task.id, status: done ? 'Open' : 'Done' })
+                    }
+                  />
+                  <span className={done ? 'task-done' : ''}>{t.title}</span>
+                </label>
+                {task && <span className="entry-type-badge">{task.status}</span>}
+                <button className="skill-delete-btn" onClick={() => removePracticeTask.mutate({ skillId: skill.id, taskId: t.id })}>Remove</button>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -393,7 +445,16 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
 
       {section === 'projects' && (
         <div>
-          <div className="project-list">
+          <LinkOrCreateProjectRow
+            existingProjects={unlinkedProjects}
+            onLinkExisting={(ref) => linkProject.mutate({ skillId: skill.id, projectRef: ref })}
+            onCreateNew={async (name, description) => {
+              const project = await createProject.mutateAsync({ name, description, tags: [] });
+              linkProject.mutate({ skillId: skill.id, projectRef: { type: 'project', id: project.id, title: project.name } });
+            }}
+          />
+          {skill.projects.length === 0 && <p className="muted-text" style={{ marginTop: 10 }}>No projects yet.</p>}
+          <div className="project-list" style={{ marginTop: 12 }}>
             {skill.projects.map((ref) => {
               const project = projectById.get(ref.id);
               return (
@@ -406,29 +467,41 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
                   </div>
                   {project?.description && <p className="entry-desc">{project.description}</p>}
                   {project && (
-                    <div className="project-progress">
-                      <div className="budget-row-top">
-                        <span className="budget-cat">{project.status}</span>
-                        <span className="budget-amounts">{project.progressPercent}%</span>
+                    <>
+                      <div className="project-progress">
+                        <div className="budget-row-top">
+                          <span className="budget-cat">{project.status}</span>
+                          <span className="budget-amounts">{project.progressPercent}%</span>
+                        </div>
+                        <div className="bar-track">
+                          <div className="bar-fill" style={{ width: `${project.progressPercent}%` }} />
+                        </div>
                       </div>
-                      <div className="bar-track">
-                        <div className="bar-fill" style={{ width: `${project.progressPercent}%` }} />
-                      </div>
-                    </div>
+                      {project.milestones.length > 0 ? (
+                        <div className="task-checklist" style={{ marginTop: 10 }}>
+                          {project.milestones.map((m) => (
+                            <label key={m.id} className="task-checklist-item">
+                              <input
+                                type="checkbox"
+                                checked={m.done}
+                                onChange={() => toggleProjectMilestone.mutate({ projectId: project.id, milestoneId: m.id })}
+                              />
+                              <span className={m.done ? 'task-done' : ''}>{m.title}</span>
+                            </label>
+                          ))}
+                          <p className="skill-progress-note">Progress is computed from these milestones — check any off to move it.</p>
+                        </div>
+                      ) : (
+                        <p className="muted-text" style={{ marginTop: 8, fontSize: 12 }}>
+                          This project has no milestones yet — add some from the Projects module to make progress trackable here.
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
               );
             })}
           </div>
-          {skill.projects.length === 0 && <p className="muted-text">No projects yet.</p>}
-          <LinkOrCreateProjectRow
-            existingProjects={unlinkedProjects}
-            onLinkExisting={(ref) => linkProject.mutate({ skillId: skill.id, projectRef: ref })}
-            onCreateNew={async (name, description) => {
-              const project = await createProject.mutateAsync({ name, description, tags: [] });
-              linkProject.mutate({ skillId: skill.id, projectRef: { type: 'project', id: project.id, title: project.name } });
-            }}
-          />
         </div>
       )}
     </div>
@@ -465,6 +538,25 @@ function OverviewSection({ skill, nextStepTitle }: { skill: Skill; nextStepTitle
         </div>
       )}
     </div>
+  );
+}
+
+function MoveButtons({
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+}: {
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}) {
+  return (
+    <span className="move-buttons">
+      <button disabled={!canMoveUp} onClick={onMoveUp} aria-label="Move up">↑</button>
+      <button disabled={!canMoveDown} onClick={onMoveDown} aria-label="Move down">↓</button>
+    </span>
   );
 }
 
@@ -524,6 +616,10 @@ function ProjectMultiLink({
 function MilestoneGroup({
   milestone,
   projects,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
   onToggleMilestone,
   onRemoveMilestone,
   onAddMilestoneProject,
@@ -531,12 +627,17 @@ function MilestoneGroup({
   onToggleItem,
   onAddItem,
   onRemoveItem,
+  onMoveItem,
   onSetItemDetails,
   onAddItemProject,
   onRemoveItemProject,
 }: {
   milestone: SkillMilestone;
   projects: Project[];
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
   onToggleMilestone: () => void;
   onRemoveMilestone: () => void;
   onAddMilestoneProject: (ref: LinkRef) => void;
@@ -544,6 +645,7 @@ function MilestoneGroup({
   onToggleItem: (itemId: string) => void;
   onAddItem: (title: string) => void;
   onRemoveItem: (itemId: string) => void;
+  onMoveItem: (itemId: string, direction: 'up' | 'down') => void;
   onSetItemDetails: (itemId: string, details: string) => void;
   onAddItemProject: (itemId: string, ref: LinkRef) => void;
   onRemoveItemProject: (itemId: string, projectId: string) => void;
@@ -553,6 +655,7 @@ function MilestoneGroup({
   return (
     <div className="milestone-group">
       <div className="skill-list-row milestone-group-header">
+        <MoveButtons canMoveUp={canMoveUp} canMoveDown={canMoveDown} onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
         <label className="task-checklist-item" style={{ flex: 1 }}>
           <input type="checkbox" checked={milestone.done} onChange={onToggleMilestone} />
           <span className={milestone.done ? 'task-done' : ''}>{milestone.title}</span>
@@ -570,11 +673,15 @@ function MilestoneGroup({
       </div>
 
       <div className="milestone-syllabus">
-        {milestone.syllabus.map((item) => (
+        {milestone.syllabus.map((item, index) => (
           <SyllabusPointRow
             key={item.id}
             item={item}
             projects={projects}
+            canMoveUp={index > 0}
+            canMoveDown={index < milestone.syllabus.length - 1}
+            onMoveUp={() => onMoveItem(item.id, 'up')}
+            onMoveDown={() => onMoveItem(item.id, 'down')}
             onToggle={() => onToggleItem(item.id)}
             onRemove={() => onRemoveItem(item.id)}
             onSetDetails={(details) => onSetItemDetails(item.id, details)}
@@ -591,6 +698,10 @@ function MilestoneGroup({
 function SyllabusPointRow({
   item,
   projects,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
   onToggle,
   onRemove,
   onSetDetails,
@@ -599,6 +710,10 @@ function SyllabusPointRow({
 }: {
   item: { id: string; title: string; details: string; done: boolean; projectRefs: LinkRef[] };
   projects: Project[];
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
   onToggle: () => void;
   onRemove: () => void;
   onSetDetails: (details: string) => void;
@@ -616,6 +731,7 @@ function SyllabusPointRow({
   return (
     <div className="syllabus-point">
       <div className="skill-list-row">
+        <MoveButtons canMoveUp={canMoveUp} canMoveDown={canMoveDown} onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
         <label className="task-checklist-item" style={{ flex: 1 }}>
           <input type="checkbox" checked={item.done} onChange={onToggle} />
           <span className={item.done ? 'task-done' : ''}>{item.title}</span>

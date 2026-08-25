@@ -1,19 +1,20 @@
 import type { SkillService } from './skillService';
 import type { LinkRef } from '../types/link';
-import type { RoadmapDraft, Skill, SkillDraft, SkillMilestone, SkillRoadmap } from '../types/skill';
+import type { RoadmapDraft, Skill, SkillDraft, SkillMilestone, SkillRoadmap, SkillStatus } from '../types/skill';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const today = () => new Date().toISOString().slice(0, 10);
 
+// Progress is a derived number (how much of the roadmap is checked off),
+// but status is a manual field the user sets directly — same pattern as
+// Tasks and Projects, rather than being silently overwritten by progress.
 function recompute(skill: Skill): Skill {
   const syllabusCount = skill.milestones.reduce((sum, m) => sum + m.syllabus.length, 0);
   const syllabusDone = skill.milestones.reduce((sum, m) => sum + m.syllabus.filter((s) => s.done).length, 0);
   const totalItems = skill.milestones.length + syllabusCount;
   const doneItems = skill.milestones.filter((m) => m.done).length + syllabusDone;
   const progressPercent = totalItems === 0 ? 0 : Math.round((doneItems / totalItems) * 100);
-  const status: Skill['status'] =
-    progressPercent === 0 ? 'Not Started' : progressPercent === 100 ? 'Completed' : 'In Progress';
-  return { ...skill, progressPercent, status, updatedAt: today() };
+  return { ...skill, progressPercent, updatedAt: today() };
 }
 
 let roadmaps: SkillRoadmap[] = [
@@ -179,6 +180,14 @@ let skills: Skill[] = [
   },
 ];
 
+function moveInArray<T>(arr: T[], index: number, direction: 'up' | 'down'): T[] {
+  const targetIndex = direction === 'up' ? index - 1 : index + 1;
+  if (index < 0 || targetIndex < 0 || targetIndex >= arr.length) return arr;
+  const next = [...arr];
+  [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+  return next;
+}
+
 function updateSkill(id: string, updater: (s: Skill) => Skill): Skill {
   skills = skills.map((s) => (s.id === id ? updater(s) : s));
   const updated = skills.find((s) => s.id === id);
@@ -241,9 +250,12 @@ export const mockSkillService: SkillService = {
     return skill;
   },
 
-  async updateDescription(id: string, description: string): Promise<Skill> {
+  async updateBasicInfo(
+    id: string,
+    info: { name: string; category: string; status: SkillStatus; description: string },
+  ): Promise<Skill> {
     await delay(250);
-    return updateSkill(id, (s) => ({ ...s, description, updatedAt: today() }));
+    return updateSkill(id, (s) => ({ ...s, ...info, updatedAt: today() }));
   },
 
   async toggleMilestone(skillId: string, milestoneId: string): Promise<Skill> {
@@ -266,6 +278,14 @@ export const mockSkillService: SkillService = {
     return updateSkill(skillId, (s) =>
       recompute({ ...s, milestones: s.milestones.filter((m) => m.id !== milestoneId) }),
     );
+  },
+
+  async moveMilestone(skillId: string, milestoneId: string, direction: 'up' | 'down'): Promise<Skill> {
+    await delay(150);
+    return updateSkill(skillId, (s) => {
+      const index = s.milestones.findIndex((m) => m.id === milestoneId);
+      return { ...s, milestones: moveInArray(s.milestones, index, direction), updatedAt: today() };
+    });
   },
 
   async addProjectToMilestone(skillId: string, milestoneId: string, projectRef: LinkRef): Promise<Skill> {
@@ -312,6 +332,16 @@ export const mockSkillService: SkillService = {
     await delay(200);
     return updateSkill(skillId, (s) =>
       recompute(mapMilestone(s, milestoneId, (m) => ({ ...m, syllabus: m.syllabus.filter((i) => i.id !== itemId) }))),
+    );
+  },
+
+  async moveSyllabusItem(skillId: string, milestoneId: string, itemId: string, direction: 'up' | 'down'): Promise<Skill> {
+    await delay(150);
+    return updateSkill(skillId, (s) =>
+      mapMilestone(s, milestoneId, (m) => {
+        const index = m.syllabus.findIndex((i) => i.id === itemId);
+        return { ...m, syllabus: moveInArray(m.syllabus, index, direction) };
+      }),
     );
   },
 
@@ -412,6 +442,14 @@ export const mockSkillService: SkillService = {
       practiceTasks: s.practiceTasks.filter((t) => t.id !== taskId),
       updatedAt: today(),
     }));
+  },
+
+  async movePracticeTask(skillId: string, taskId: string, direction: 'up' | 'down'): Promise<Skill> {
+    await delay(150);
+    return updateSkill(skillId, (s) => {
+      const index = s.practiceTasks.findIndex((t) => t.id === taskId);
+      return { ...s, practiceTasks: moveInArray(s.practiceTasks, index, direction), updatedAt: today() };
+    });
   },
 
   async linkProject(skillId: string, projectRef: LinkRef): Promise<Skill> {

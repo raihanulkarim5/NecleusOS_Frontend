@@ -1,4 +1,5 @@
 import { FormEvent, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useCreateRoadmap, useCreateSkill, useSkillRoadmaps, useSkills } from '../hooks/useSkills';
 import type { Skill, SkillDraft } from '../types/skill';
 
@@ -269,7 +270,7 @@ function AddSkillModal({
     setCreatingRoadmap(false);
   }
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-title">Add skill</h2>
@@ -361,6 +362,7 @@ function AddSkillModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
