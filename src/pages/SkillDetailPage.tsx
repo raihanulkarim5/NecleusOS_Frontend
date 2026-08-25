@@ -3,12 +3,20 @@ import {
   useAddCourse,
   useAddMilestone,
   useAddPracticeTask,
+  useAddProjectToMilestone,
+  useAddProjectToSyllabusItem,
   useAddResource,
   useAddSyllabusItem,
   useAddVideo,
   useLinkSkillProject,
-  useSetMilestoneProject,
-  useSetSyllabusItemProject,
+  useRemoveCourse,
+  useRemoveMilestone,
+  useRemovePracticeTask,
+  useRemoveProjectFromMilestone,
+  useRemoveProjectFromSyllabusItem,
+  useRemoveResource,
+  useRemoveSyllabusItem,
+  useRemoveVideo,
   useSkill,
   useToggleSkillFavorite,
   useToggleSkillMilestone,
@@ -18,7 +26,7 @@ import {
   useUpdateSkillNotes,
   useUpdateSyllabusItemDetails,
 } from '../hooks/useSkills';
-import { useCreateTask, useTasks } from '../hooks/useTasks';
+import { useCreateTask, useTasks, useUpdateTaskStatus } from '../hooks/useTasks';
 import { useCreateProject, useProjects } from '../hooks/useProjects';
 import { RichNotesEditor } from '../components/RichNotesEditor';
 import type { LinkRef } from '../types/link';
@@ -119,16 +127,25 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   const { data: skill, isLoading } = useSkill(skillId);
   const toggleSyllabusItem = useToggleSyllabusItem();
   const addSyllabusItem = useAddSyllabusItem();
-  const setSyllabusItemProject = useSetSyllabusItemProject();
+  const removeSyllabusItem = useRemoveSyllabusItem();
+  const addProjectToSyllabusItem = useAddProjectToSyllabusItem();
+  const removeProjectFromSyllabusItem = useRemoveProjectFromSyllabusItem();
   const updateSyllabusItemDetails = useUpdateSyllabusItemDetails();
   const toggleMilestone = useToggleSkillMilestone();
   const addMilestone = useAddMilestone();
-  const setMilestoneProject = useSetMilestoneProject();
+  const removeMilestone = useRemoveMilestone();
+  const addProjectToMilestone = useAddProjectToMilestone();
+  const removeProjectFromMilestone = useRemoveProjectFromMilestone();
   const addResource = useAddResource();
+  const removeResource = useRemoveResource();
   const addCourse = useAddCourse();
+  const removeCourse = useRemoveCourse();
   const addVideo = useAddVideo();
+  const removeVideo = useRemoveVideo();
   const addPracticeTask = useAddPracticeTask();
+  const removePracticeTask = useRemovePracticeTask();
   const createTask = useCreateTask();
+  const updateTaskStatus = useUpdateTaskStatus();
   const linkProject = useLinkSkillProject();
   const unlinkProject = useUnlinkSkillProject();
   const createProject = useCreateProject();
@@ -147,6 +164,7 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   }
 
   const linkedTaskIds = new Set(skill.practiceTasks.map((t) => t.id));
+  const linkedTaskObjects = (tasks ?? []).filter((t) => linkedTaskIds.has(t.id));
   const unlinkedTasks = (tasks ?? []).filter((t) => !linkedTaskIds.has(t.id));
   const linkedProjectIds = new Set(skill.projects.map((p) => p.id));
   const unlinkedProjects = (allProjects ?? []).filter((p) => !linkedProjectIds.has(p.id));
@@ -231,28 +249,38 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
 
       {section === 'syllabus' && (
         <div>
-          {skill.milestones.length === 0 && <p className="muted-text">No milestones yet.</p>}
-          {skill.milestones.map((m) => (
-            <MilestoneGroup
-              key={m.id}
-              milestone={m}
-              projects={allProjects ?? []}
-              onToggleMilestone={() => toggleMilestone.mutate({ skillId: skill.id, milestoneId: m.id })}
-              onSetMilestoneProject={(ref) => setMilestoneProject.mutate({ skillId: skill.id, milestoneId: m.id, projectRef: ref })}
-              onToggleItem={(itemId) => toggleSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, itemId })}
-              onAddItem={(title) => addSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, title })}
-              onSetItemDetails={(itemId, details) =>
-                updateSyllabusItemDetails.mutate({ skillId: skill.id, milestoneId: m.id, itemId, details })
-              }
-              onSetItemProject={(itemId, ref) =>
-                setSyllabusItemProject.mutate({ skillId: skill.id, milestoneId: m.id, itemId, projectRef: ref })
-              }
-            />
-          ))}
           <InlineAddRow
             placeholder="Add a milestone…"
             onAdd={(title) => addMilestone.mutate({ skillId: skill.id, title })}
           />
+          {skill.milestones.length === 0 && <p className="muted-text" style={{ marginTop: 10 }}>No milestones yet.</p>}
+          <div style={{ marginTop: 12 }}>
+            {skill.milestones.map((m) => (
+              <MilestoneGroup
+                key={m.id}
+                milestone={m}
+                projects={allProjects ?? []}
+                onToggleMilestone={() => toggleMilestone.mutate({ skillId: skill.id, milestoneId: m.id })}
+                onRemoveMilestone={() => removeMilestone.mutate({ skillId: skill.id, milestoneId: m.id })}
+                onAddMilestoneProject={(ref) => addProjectToMilestone.mutate({ skillId: skill.id, milestoneId: m.id, projectRef: ref })}
+                onRemoveMilestoneProject={(projectId) =>
+                  removeProjectFromMilestone.mutate({ skillId: skill.id, milestoneId: m.id, projectId })
+                }
+                onToggleItem={(itemId) => toggleSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, itemId })}
+                onAddItem={(title) => addSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, title })}
+                onRemoveItem={(itemId) => removeSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, itemId })}
+                onSetItemDetails={(itemId, details) =>
+                  updateSyllabusItemDetails.mutate({ skillId: skill.id, milestoneId: m.id, itemId, details })
+                }
+                onAddItemProject={(itemId, ref) =>
+                  addProjectToSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, itemId, projectRef: ref })
+                }
+                onRemoveItemProject={(itemId, projectId) =>
+                  removeProjectFromSyllabusItem.mutate({ skillId: skill.id, milestoneId: m.id, itemId, projectId })
+                }
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -263,11 +291,12 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
             <div className="skill-resource-row" key={r.id}>
               <span className="entry-type-badge">{r.type}</span>
               {r.url && r.url !== '#' ? (
-                <a href={r.url} target="_blank" rel="noreferrer">{r.title}</a>
+                <a href={r.url} target="_blank" rel="noreferrer" style={{ flex: 1 }}>{r.title}</a>
               ) : (
-                <span>{r.title}</span>
+                <span style={{ flex: 1 }}>{r.title}</span>
               )}
               {r.isUpload && <span className="skill-upload-tag">uploaded</span>}
+              <button className="skill-delete-btn" onClick={() => removeResource.mutate({ skillId: skill.id, resourceId: r.id })}>Remove</button>
             </div>
           ))}
           <AddResourceRow
@@ -284,11 +313,12 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
           {skill.courses.map((c) => (
             <div className="skill-resource-row" key={c.id}>
               {c.url && c.url !== '#' ? (
-                <a href={c.url} target="_blank" rel="noreferrer">{c.title}</a>
+                <a href={c.url} target="_blank" rel="noreferrer" style={{ flex: 1 }}>{c.title}</a>
               ) : (
-                <span>{c.title}</span>
+                <span style={{ flex: 1 }}>{c.title}</span>
               )}
               <span className="muted-text">{c.provider}</span>
+              <button className="skill-delete-btn" onClick={() => removeCourse.mutate({ skillId: skill.id, courseId: c.id })}>Remove</button>
             </div>
           ))}
           <AddCourseRow onAdd={(title, provider, url) => addCourse.mutate({ skillId: skill.id, title, provider, url })} />
@@ -301,10 +331,11 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
           {skill.videos.map((v) => (
             <div className="skill-resource-row" key={v.id}>
               {v.url && v.url !== '#' ? (
-                <a href={v.url} target="_blank" rel="noreferrer">{v.title}</a>
+                <a href={v.url} target="_blank" rel="noreferrer" style={{ flex: 1 }}>{v.title}</a>
               ) : (
-                <span>{v.title}</span>
+                <span style={{ flex: 1 }}>{v.title}</span>
               )}
+              <button className="skill-delete-btn" onClick={() => removeVideo.mutate({ skillId: skill.id, videoId: v.id })}>Remove</button>
             </div>
           ))}
           <AddVideoRow onAdd={(title, url) => addVideo.mutate({ skillId: skill.id, title, url })} />
@@ -314,11 +345,26 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
       {section === 'practice' && (
         <div className="stat-card">
           {skill.practiceTasks.length === 0 && <p className="muted-text">No practice tasks yet.</p>}
-          {skill.practiceTasks.map((t) => (
-            <div className="project-link-badge" key={t.id} style={{ marginBottom: 6, display: 'inline-block' }}>
-              {t.type}: {t.title}
-            </div>
-          ))}
+          {skill.practiceTasks.map((t) => {
+            const task = linkedTaskObjects.find((task) => task.id === t.id);
+            const done = task?.status === 'Done';
+            return (
+              <div className="skill-resource-row" key={t.id}>
+                <label className="task-checklist-item" style={{ flex: 1 }}>
+                  <input
+                    type="checkbox"
+                    checked={done}
+                    onChange={() =>
+                      task && updateTaskStatus.mutate({ id: task.id, status: done ? 'Open' : 'Done' })
+                    }
+                  />
+                  <span className={done ? 'task-done' : ''}>{t.title}</span>
+                </label>
+                {task && <span className="entry-type-badge">{task.status}</span>}
+                <button className="skill-delete-btn" onClick={() => removePracticeTask.mutate({ skillId: skill.id, taskId: t.id })}>Remove</button>
+              </div>
+            );
+          })}
           <PracticeTaskRow
             existingTasks={unlinkedTasks}
             onLinkExisting={(taskId, taskTitle) => addPracticeTask.mutate({ skillId: skill.id, taskId, taskTitle })}
@@ -355,9 +401,10 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
                   <div className="task-card-top">
                     <span className="project-card-title">{ref.title}</span>
                     <button className="skill-unlink-btn" onClick={() => unlinkProject.mutate({ skillId: skill.id, projectId: ref.id })}>
-                      Unlink
+                      Remove
                     </button>
                   </div>
+                  {project?.description && <p className="entry-desc">{project.description}</p>}
                   {project && (
                     <div className="project-progress">
                       <div className="budget-row-top">
@@ -377,8 +424,8 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
           <LinkOrCreateProjectRow
             existingProjects={unlinkedProjects}
             onLinkExisting={(ref) => linkProject.mutate({ skillId: skill.id, projectRef: ref })}
-            onCreateNew={async (name) => {
-              const project = await createProject.mutateAsync({ name, description: '', tags: [] });
+            onCreateNew={async (name, description) => {
+              const project = await createProject.mutateAsync({ name, description, tags: [] });
               linkProject.mutate({ skillId: skill.id, projectRef: { type: 'project', id: project.id, title: project.name } });
             }}
           />
@@ -421,52 +468,55 @@ function OverviewSection({ skill, nextStepTitle }: { skill: Skill; nextStepTitle
   );
 }
 
-function ProjectMiniLink({
-  projectRef,
+function ProjectMultiLink({
+  projectRefs,
   projects,
-  onSetProject,
+  onAdd,
+  onRemove,
 }: {
-  projectRef: LinkRef | null;
+  projectRefs: LinkRef[];
   projects: Project[];
-  onSetProject: (ref: LinkRef | null) => void;
+  onAdd: (ref: LinkRef) => void;
+  onRemove: (projectId: string) => void;
 }) {
   const [picking, setPicking] = useState(false);
   const [choice, setChoice] = useState('');
-
-  if (projectRef) {
-    return (
-      <span className="skill-mini-badge">
-        {projectRef.title}
-        <button onClick={() => onSetProject(null)} aria-label="Unlink project">×</button>
-      </span>
-    );
-  }
-
-  if (!picking) {
-    return (
-      <button className="skill-mini-link-btn" onClick={() => setPicking(true)}>+ link project</button>
-    );
-  }
+  const linkedIds = new Set(projectRefs.map((p) => p.id));
+  const available = projects.filter((p) => !linkedIds.has(p.id));
 
   return (
-    <span className="skill-mini-picker">
-      <select value={choice} onChange={(e) => setChoice(e.target.value)}>
-        <option value="">Choose project…</option>
-        {projects.map((p) => (
-          <option key={p.id} value={p.id}>{p.name}</option>
-        ))}
-      </select>
-      <button
-        disabled={!choice}
-        onClick={() => {
-          const project = projects.find((p) => p.id === choice);
-          if (project) onSetProject({ type: 'project', id: project.id, title: project.name });
-          setPicking(false);
-          setChoice('');
-        }}
-      >
-        Link
-      </button>
+    <span className="skill-mini-link-group">
+      {projectRefs.map((ref) => (
+        <span className="skill-mini-badge" key={ref.id}>
+          {ref.title}
+          <button onClick={() => onRemove(ref.id)} aria-label="Remove project">×</button>
+        </span>
+      ))}
+      {picking ? (
+        <span className="skill-mini-picker">
+          <select value={choice} onChange={(e) => setChoice(e.target.value)}>
+            <option value="">Choose project…</option>
+            {available.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <button
+            disabled={!choice}
+            onClick={() => {
+              const project = available.find((p) => p.id === choice);
+              if (project) onAdd({ type: 'project', id: project.id, title: project.name });
+              setPicking(false);
+              setChoice('');
+            }}
+          >
+            Link
+          </button>
+        </span>
+      ) : (
+        available.length > 0 && (
+          <button className="skill-mini-link-btn" onClick={() => setPicking(true)}>+ project</button>
+        )
+      )}
     </span>
   );
 }
@@ -475,20 +525,28 @@ function MilestoneGroup({
   milestone,
   projects,
   onToggleMilestone,
-  onSetMilestoneProject,
+  onRemoveMilestone,
+  onAddMilestoneProject,
+  onRemoveMilestoneProject,
   onToggleItem,
   onAddItem,
+  onRemoveItem,
   onSetItemDetails,
-  onSetItemProject,
+  onAddItemProject,
+  onRemoveItemProject,
 }: {
   milestone: SkillMilestone;
   projects: Project[];
   onToggleMilestone: () => void;
-  onSetMilestoneProject: (ref: LinkRef | null) => void;
+  onRemoveMilestone: () => void;
+  onAddMilestoneProject: (ref: LinkRef) => void;
+  onRemoveMilestoneProject: (projectId: string) => void;
   onToggleItem: (itemId: string) => void;
   onAddItem: (title: string) => void;
+  onRemoveItem: (itemId: string) => void;
   onSetItemDetails: (itemId: string, details: string) => void;
-  onSetItemProject: (itemId: string, ref: LinkRef | null) => void;
+  onAddItemProject: (itemId: string, ref: LinkRef) => void;
+  onRemoveItemProject: (itemId: string, projectId: string) => void;
 }) {
   const doneCount = milestone.syllabus.filter((i) => i.done).length;
 
@@ -502,7 +560,13 @@ function MilestoneGroup({
             <span className="milestone-count">{doneCount}/{milestone.syllabus.length}</span>
           )}
         </label>
-        <ProjectMiniLink projectRef={milestone.projectRef} projects={projects} onSetProject={onSetMilestoneProject} />
+        <ProjectMultiLink
+          projectRefs={milestone.projectRefs}
+          projects={projects}
+          onAdd={onAddMilestoneProject}
+          onRemove={onRemoveMilestoneProject}
+        />
+        <button className="skill-delete-btn" onClick={onRemoveMilestone}>Remove</button>
       </div>
 
       <div className="milestone-syllabus">
@@ -512,8 +576,10 @@ function MilestoneGroup({
             item={item}
             projects={projects}
             onToggle={() => onToggleItem(item.id)}
+            onRemove={() => onRemoveItem(item.id)}
             onSetDetails={(details) => onSetItemDetails(item.id, details)}
-            onSetProject={(ref) => onSetItemProject(item.id, ref)}
+            onAddProject={(ref) => onAddItemProject(item.id, ref)}
+            onRemoveProject={(projectId) => onRemoveItemProject(item.id, projectId)}
           />
         ))}
         <InlineAddRow placeholder="Add a point/task to this milestone…" onAdd={onAddItem} />
@@ -526,14 +592,18 @@ function SyllabusPointRow({
   item,
   projects,
   onToggle,
+  onRemove,
   onSetDetails,
-  onSetProject,
+  onAddProject,
+  onRemoveProject,
 }: {
-  item: { id: string; title: string; details: string; done: boolean; projectRef: LinkRef | null };
+  item: { id: string; title: string; details: string; done: boolean; projectRefs: LinkRef[] };
   projects: Project[];
   onToggle: () => void;
+  onRemove: () => void;
   onSetDetails: (details: string) => void;
-  onSetProject: (ref: LinkRef | null) => void;
+  onAddProject: (ref: LinkRef) => void;
+  onRemoveProject: (projectId: string) => void;
 }) {
   const [editingDetails, setEditingDetails] = useState(false);
   const [draft, setDraft] = useState(item.details);
@@ -550,7 +620,8 @@ function SyllabusPointRow({
           <input type="checkbox" checked={item.done} onChange={onToggle} />
           <span className={item.done ? 'task-done' : ''}>{item.title}</span>
         </label>
-        <ProjectMiniLink projectRef={item.projectRef} projects={projects} onSetProject={onSetProject} />
+        <ProjectMultiLink projectRefs={item.projectRefs} projects={projects} onAdd={onAddProject} onRemove={onRemoveProject} />
+        <button className="skill-delete-btn" onClick={onRemove}>Remove</button>
       </div>
       {editingDetails ? (
         <div className="syllabus-point-details-edit">
@@ -757,11 +828,12 @@ function LinkOrCreateProjectRow({
 }: {
   existingProjects: Project[];
   onLinkExisting: (ref: LinkRef) => void;
-  onCreateNew: (name: string) => Promise<void>;
+  onCreateNew: (name: string, description: string) => Promise<void>;
 }) {
   const [mode, setMode] = useState<'existing' | 'new'>('new');
   const [projectId, setProjectId] = useState('');
   const [newName, setNewName] = useState('');
+  const [newDescription, setNewDescription] = useState('');
   const [creating, setCreating] = useState(false);
 
   function handleSubmit(e: FormEvent) {
@@ -774,9 +846,10 @@ function LinkOrCreateProjectRow({
     } else {
       if (!newName.trim()) return;
       setCreating(true);
-      onCreateNew(newName.trim()).finally(() => {
+      onCreateNew(newName.trim(), newDescription.trim()).finally(() => {
         setCreating(false);
         setNewName('');
+        setNewDescription('');
       });
     }
   }
@@ -788,14 +861,23 @@ function LinkOrCreateProjectRow({
         <button type="button" className={mode === 'existing' ? 'active' : ''} onClick={() => setMode('existing')}>Link existing</button>
       </div>
       {mode === 'new' ? (
-        <div className="inline-add-row" style={{ marginTop: 8 }}>
+        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
           <input
             type="text"
             placeholder="New project name… (also appears in Projects)"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
           />
-          <button type="submit" disabled={!newName.trim() || creating}>{creating ? 'Creating…' : '+ Create'}</button>
+          <textarea
+            rows={2}
+            placeholder="Project details (optional)…"
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
+            className="skill-project-desc-input"
+          />
+          <button type="submit" disabled={!newName.trim() || creating} style={{ alignSelf: 'flex-start' }}>
+            {creating ? 'Creating…' : '+ Create'}
+          </button>
         </div>
       ) : (
         <div className="inline-add-row" style={{ marginTop: 8 }}>

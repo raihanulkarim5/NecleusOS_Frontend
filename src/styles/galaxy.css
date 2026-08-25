@@ -1897,3 +1897,38 @@ select optgroup {
   resize: vertical;
   outline: none;
 }
+
+/* Delete/remove buttons across skill sub-lists */
+.skill-delete-btn {
+  background: none;
+  border: 1px solid var(--card-border);
+  color: var(--muted);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.skill-delete-btn:hover { border-color: var(--magenta); color: var(--magenta); }
+
+.skill-mini-link-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.skill-project-desc-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 12px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}

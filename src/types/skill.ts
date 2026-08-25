@@ -10,7 +10,7 @@ export interface SyllabusItem {
   title: string;
   details: string;
   done: boolean;
-  projectRef: LinkRef | null;
+  projectRefs: LinkRef[];
 }
 
 export interface SkillResource {
@@ -38,7 +38,7 @@ export interface SkillMilestone {
   id: string;
   title: string;
   done: boolean;
-  projectRef: LinkRef | null;
+  projectRefs: LinkRef[];
   syllabus: SyllabusItem[];
 }
 
