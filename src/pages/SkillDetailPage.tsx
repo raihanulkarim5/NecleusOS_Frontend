@@ -32,6 +32,7 @@ import {
 import { useCreateTask, useTasks, useUpdateTaskStatus } from '../hooks/useTasks';
 import { useCreateProject, useProjects, useToggleMilestone as useToggleProjectMilestone } from '../hooks/useProjects';
 import { RichNotesEditor } from '../components/RichNotesEditor';
+import { MoveButtons } from '../components/MoveButtons';
 import type { LinkRef } from '../types/link';
 import type { Skill, SkillMilestone, SkillStatus } from '../types/skill';
 import type { Project } from '../types/project';
@@ -538,25 +539,6 @@ function OverviewSection({ skill, nextStepTitle }: { skill: Skill; nextStepTitle
         </div>
       )}
     </div>
-  );
-}
-
-function MoveButtons({
-  canMoveUp,
-  canMoveDown,
-  onMoveUp,
-  onMoveDown,
-}: {
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-}) {
-  return (
-    <span className="move-buttons">
-      <button disabled={!canMoveUp} onClick={onMoveUp} aria-label="Move up">↑</button>
-      <button disabled={!canMoveDown} onClick={onMoveDown} aria-label="Move down">↓</button>
-    </span>
   );
 }
 
