@@ -14,6 +14,7 @@ export interface JournalEntry {
   mood: number; // 1 (low) – 5 (great)
   tags: string[];
   links: LinkRef[];
+  order: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,4 +29,17 @@ export interface JournalDraft {
   gratitude: string[];
   mood: number;
   tags: string[];
+}
+
+export interface JournalUpdate {
+  date?: string;
+  logType?: JournalLogType;
+  content?: string;
+  wins?: string[];
+  mistakes?: string[];
+  learnings?: string[];
+  gratitude?: string[];
+  mood?: number;
+  tags?: string[];
+  links?: LinkRef[];
 }

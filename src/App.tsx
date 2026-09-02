@@ -5,7 +5,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EntriesPage } from './pages/EntriesPage';
 import { TasksPage } from './pages/TasksPage';
-import { JournalPage } from './pages/JournalPage';
+import { JournalModule } from './pages/JournalModule';
 import { FinancePage } from './pages/FinancePage';
 import { ProjectsModule } from './pages/ProjectsModule';
 import { InboxPage } from './pages/InboxPage';
@@ -37,7 +37,7 @@ export function App() {
       {activeTab === 'inbox' && <InboxPage />}
       {activeTab === 'entries' && <EntriesPage />}
       {activeTab === 'tasks' && <TasksPage />}
-      {activeTab === 'journal' && <JournalPage />}
+      {activeTab === 'journal' && <JournalModule />}
       {activeTab === 'finance' && <FinancePage />}
       {activeTab === 'projects' && <ProjectsModule />}
       {activeTab === 'skills' && <SkillsModule />}

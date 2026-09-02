@@ -1,5 +1,5 @@
 import type { JournalService } from './journalService';
-import type { JournalDraft, JournalEntry } from '../types/journal';
+import type { JournalDraft, JournalEntry, JournalUpdate } from '../types/journal';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const today = () => new Date().toISOString().slice(0, 10);
@@ -23,6 +23,7 @@ let entries: JournalEntry[] = [
     mood: 4,
     tags: ['work'],
     links: [],
+    order: 0,
     createdAt: today(),
     updatedAt: today(),
   },
@@ -38,6 +39,7 @@ let entries: JournalEntry[] = [
     mood: 3,
     tags: ['work'],
     links: [],
+    order: 1,
     createdAt: daysAgo(1),
     updatedAt: daysAgo(1),
   },
@@ -53,6 +55,7 @@ let entries: JournalEntry[] = [
     mood: 4,
     tags: ['architecture'],
     links: [],
+    order: 2,
     createdAt: daysAgo(2),
     updatedAt: daysAgo(2),
   },
@@ -68,6 +71,7 @@ let entries: JournalEntry[] = [
     mood: 3,
     tags: [],
     links: [],
+    order: 3,
     createdAt: daysAgo(3),
     updatedAt: daysAgo(3),
   },
@@ -79,6 +83,13 @@ export const mockJournalService: JournalService = {
     return [...entries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   },
 
+  async getEntry(id: string): Promise<JournalEntry> {
+    await delay(200);
+    const entry = entries.find((e) => e.id === id);
+    if (!entry) throw new Error(`Journal entry ${id} not found`);
+    return { ...entry };
+  },
+
   async createEntry(draft: JournalDraft): Promise<JournalEntry> {
     await delay(400);
     const now = today();
@@ -86,11 +97,49 @@ export const mockJournalService: JournalService = {
       id: `j${Date.now()}`,
       ...draft,
       links: [],
+      order: entries.length,
       createdAt: now,
       updatedAt: now,
     };
     entries = [entry, ...entries];
     return entry;
+  },
+
+  async updateEntry(id: string, updates: JournalUpdate): Promise<JournalEntry> {
+    await delay(300);
+    const idx = entries.findIndex((e) => e.id === id);
+    if (idx === -1) throw new Error(`Journal entry ${id} not found`);
+    
+    const entry = entries[idx];
+    const updated: JournalEntry = {
+      ...entry,
+      ...updates,
+      id: entry.id,
+      createdAt: entry.createdAt,
+      updatedAt: today(),
+    };
+    
+    entries[idx] = updated;
+    return { ...updated };
+  },
+
+  async deleteEntry(id: string): Promise<void> {
+    await delay(300);
+    entries = entries.filter((e) => e.id !== id);
+  },
+
+  async moveEntry(id: string, direction: 'up' | 'down'): Promise<JournalEntry[]> {
+    await delay(200);
+    const idx = entries.findIndex((e) => e.id === id);
+    if (idx === -1) throw new Error(`Journal entry ${id} not found`);
+    
+    if (direction === 'up' && idx > 0) {
+      [entries[idx], entries[idx - 1]] = [entries[idx - 1], entries[idx]];
+    } else if (direction === 'down' && idx < entries.length - 1) {
+      [entries[idx], entries[idx + 1]] = [entries[idx + 1], entries[idx]];
+    }
+    
+    return [...entries];
   },
 
   async getStreakDays(): Promise<number> {
