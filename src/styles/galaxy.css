@@ -2026,3 +2026,14 @@ select optgroup {
   color: var(--muted);
   margin: 8px 0 0;
 }
+
+.rich-editor-content pre {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}

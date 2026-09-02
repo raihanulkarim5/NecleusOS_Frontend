@@ -27,16 +27,15 @@ let projects: Project[] = [
     progressPercent: 60,
     isTemplate: false,
     milestones: [
-      { id: 'm1', title: 'Auth + Dashboard shell', done: true },
-      { id: 'm2', title: 'Entries, Tasks, Journal, Finance', done: true },
-      { id: 'm3', title: 'Projects, Skills, Knowledge Base', done: false },
-      { id: 'm4', title: '.NET Core API + real auth', done: false },
-      { id: 'm5', title: 'Flutter mobile', done: false },
+      { id: 'm1', title: 'Auth + Dashboard shell', done: true , tasks: [] },
+      { id: 'm2', title: 'Entries, Tasks, Journal, Finance', done: true , tasks: [{ type: 'task', id: 'tk1', title: 'Build Task module UI' }] },
+      { id: 'm3', title: 'Projects, Skills, Knowledge Base', done: false , tasks: [] },
+      { id: 'm4', title: '.NET Core API + real auth', done: false , tasks: [] },
+      { id: 'm5', title: 'Flutter mobile', done: false , tasks: [] },
     ],
     tasks: [{ type: 'task', id: 'tk1', title: 'Build Task module UI' }],
     decisions: [{ type: 'entry', id: 'e3', title: 'Should Entries be the base type for Tasks too?' }],
     problems: [{ type: 'entry', id: 'e5', title: 'Bootstrap-only styling might clash with the galaxy theme' }],
-    solutions: [],
     journalEntries: [{ type: 'journal', id: 'j3', title: 'Reviewed the Entries vs. module-specific decision' }],
     resources: [{ id: 'res1', title: 'Vite Codespaces port-forwarding docs', url: 'https://vitejs.dev' }],
     files: [],
@@ -54,14 +53,13 @@ let projects: Project[] = [
     progressPercent: 80,
     isTemplate: false,
     milestones: [
-      { id: 'm6', title: 'Core modules', done: true },
-      { id: 'm7', title: 'Reporting layer', done: true },
-      { id: 'm8', title: 'Middleware refactor', done: false },
+      { id: 'm6', title: 'Core modules', done: true , tasks: [] },
+      { id: 'm7', title: 'Reporting layer', done: true , tasks: [] },
+      { id: 'm8', title: 'Middleware refactor', done: false , tasks: [] },
     ],
     tasks: [{ type: 'task', id: 'tk5', title: 'Fix Bug #142 in Crystal Report export' }],
     decisions: [],
     problems: [],
-    solutions: [],
     journalEntries: [],
     resources: [],
     files: [],
@@ -78,11 +76,10 @@ let projects: Project[] = [
     status: 'Active',
     progressPercent: 10,
     isTemplate: false,
-    milestones: [{ id: 'm9', title: 'Scope the plug-in interface', done: false }],
+    milestones: [{ id: 'm9', title: 'Scope the plug-in interface', done: false , tasks: [] }],
     tasks: [],
     decisions: [],
     problems: [],
-    solutions: [],
     journalEntries: [],
     resources: [],
     files: [],
@@ -100,15 +97,14 @@ let projects: Project[] = [
     progressPercent: 0,
     isTemplate: true,
     milestones: [
-      { id: 'm10', title: 'Design types + mock service', done: false },
-      { id: 'm11', title: 'Build list + detail pages', done: false },
-      { id: 'm12', title: 'Wire into nav + App.tsx', done: false },
-      { id: 'm13', title: 'Ship and push', done: false },
+      { id: 'm10', title: 'Design types + mock service', done: false , tasks: [] },
+      { id: 'm11', title: 'Build list + detail pages', done: false , tasks: [] },
+      { id: 'm12', title: 'Wire into nav + App.tsx', done: false , tasks: [] },
+      { id: 'm13', title: 'Ship and push', done: false , tasks: [] },
     ],
     tasks: [],
     decisions: [],
     problems: [],
-    solutions: [],
     journalEntries: [],
     resources: [],
     files: [],
@@ -131,7 +127,6 @@ const CATEGORY_FIELD: Record<ProjectLinkCategory, keyof Project> = {
   tasks: 'tasks',
   decisions: 'decisions',
   problems: 'problems',
-  solutions: 'solutions',
   journal: 'journalEntries',
 };
 
@@ -169,7 +164,6 @@ export const mockProjectService: ProjectService = {
       tasks: [],
       decisions: [],
       problems: [],
-      solutions: [],
       journalEntries: [],
       resources: [],
       files: [],
@@ -193,12 +187,11 @@ export const mockProjectService: ProjectService = {
       name,
       isTemplate: false,
       status: 'Active',
-      milestones: template.milestones.map((m, i) => ({ ...m, id: `m${Date.now()}-${i}`, done: false })),
+      milestones: template.milestones.map((m, i) => ({ ...m, id: `m${Date.now()}-${i}`, done: false, tasks: [] })),
       progressPercent: 0,
       tasks: [],
       decisions: [],
       problems: [],
-      solutions: [],
       journalEntries: [],
       resources: [],
       files: [],
@@ -240,7 +233,7 @@ export const mockProjectService: ProjectService = {
   async addMilestone(projectId: string, title: string): Promise<Project> {
     await delay(250);
     return updateProject(projectId, (p) => {
-      const milestones = [...p.milestones, { id: `m${Date.now()}`, title, done: false }];
+      const milestones = [...p.milestones, { id: `m${Date.now()}`, title, done: false, tasks: [] }];
       return { ...p, milestones, progressPercent: computeProgress(milestones), updatedAt: today() };
     });
   },
@@ -259,6 +252,28 @@ export const mockProjectService: ProjectService = {
       const index = p.milestones.findIndex((m) => m.id === milestoneId);
       return { ...p, milestones: moveInArray(p.milestones, index, direction), updatedAt: today() };
     });
+  },
+
+  async addMilestoneTask(projectId: string, milestoneId: string, taskId: string, taskTitle: string): Promise<Project> {
+    await delay(250);
+    return updateProject(projectId, (p) => ({
+      ...p,
+      milestones: p.milestones.map((m) =>
+        m.id === milestoneId ? { ...m, tasks: [...m.tasks, { type: 'task', id: taskId, title: taskTitle }] } : m,
+      ),
+      updatedAt: today(),
+    }));
+  },
+
+  async removeMilestoneTask(projectId: string, milestoneId: string, taskId: string): Promise<Project> {
+    await delay(200);
+    return updateProject(projectId, (p) => ({
+      ...p,
+      milestones: p.milestones.map((m) =>
+        m.id === milestoneId ? { ...m, tasks: m.tasks.filter((t) => t.id !== taskId) } : m,
+      ),
+      updatedAt: today(),
+    }));
   },
 
   async addLinkedItem(projectId: string, category: ProjectLinkCategory, ref: LinkRef): Promise<Project> {

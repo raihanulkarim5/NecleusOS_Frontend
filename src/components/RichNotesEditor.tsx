@@ -1,15 +1,12 @@
 import { useEffect, useRef } from 'react';
 
 interface RichNotesEditorProps {
-  value: string; // HTML
+  value: string;
   onSave: (html: string) => void;
+  placeholder?: string;
 }
 
-// A deliberately small rich-text editor — bold/italic/underline and lists,
-// via document.execCommand. It's an old API, but it's supported everywhere
-// without pulling in a dependency, and this is exactly the scope "rich
-// notes" needs here: light formatting, not a full document editor.
-export function RichNotesEditor({ value, onSave }: RichNotesEditorProps) {
+export function RichNotesEditor({ value, onSave, placeholder }: RichNotesEditorProps) {
   const ref = useRef<HTMLDivElement>(null);
   const lastSaved = useRef(value);
 
@@ -21,8 +18,8 @@ export function RichNotesEditor({ value, onSave }: RichNotesEditorProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function exec(command: string) {
-    document.execCommand(command);
+  function exec(command: string, arg?: string) {
+    document.execCommand(command, false, arg);
     ref.current?.focus();
   }
 
@@ -42,6 +39,7 @@ export function RichNotesEditor({ value, onSave }: RichNotesEditorProps) {
         <button type="button" onClick={() => exec('underline')}><u>U</u></button>
         <button type="button" onClick={() => exec('insertUnorderedList')}>• List</button>
         <button type="button" onClick={() => exec('insertOrderedList')}>1. List</button>
+        <button type="button" onClick={() => exec('formatBlock', 'pre')} title="Code block">{'</>'}</button>
       </div>
       <div
         ref={ref}
@@ -49,7 +47,7 @@ export function RichNotesEditor({ value, onSave }: RichNotesEditorProps) {
         contentEditable
         suppressContentEditableWarning
         onBlur={handleBlur}
-        data-placeholder="Freeform notes about this skill…"
+        data-placeholder={placeholder ?? 'Freeform notes…'}
       />
     </div>
   );

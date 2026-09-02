@@ -101,6 +101,20 @@ export function useMoveProjectMilestone() {
   );
 }
 
+export function useAddMilestoneTask() {
+  return useProjectMutation(
+    ({ projectId, milestoneId, taskId, taskTitle }: { projectId: string; milestoneId: string; taskId: string; taskTitle: string }) =>
+      projectService.addMilestoneTask(projectId, milestoneId, taskId, taskTitle),
+  );
+}
+
+export function useRemoveMilestoneTask() {
+  return useProjectMutation(
+    ({ projectId, milestoneId, taskId }: { projectId: string; milestoneId: string; taskId: string }) =>
+      projectService.removeMilestoneTask(projectId, milestoneId, taskId),
+  );
+}
+
 export function useAddProjectLinkedItem() {
   return useProjectMutation(
     ({ projectId, category, ref }: { projectId: string; category: ProjectLinkCategory; ref: LinkRef }) =>

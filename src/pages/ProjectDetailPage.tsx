@@ -1,11 +1,13 @@
 import { ChangeEvent, FormEvent, useState } from 'react';
 import {
+  useAddMilestoneTask,
   useAddProjectFile,
   useAddProjectLinkedItem,
   useAddProjectMilestone,
   useAddProjectResource,
   useMoveProjectMilestone,
   useProject,
+  useRemoveMilestoneTask,
   useRemoveProjectFile,
   useRemoveProjectLinkedItem,
   useRemoveProjectMilestone,
@@ -30,7 +32,7 @@ interface ProjectDetailPageProps {
   onBack: () => void;
 }
 
-type SectionKey = 'overview' | 'tasks' | 'notes' | 'decisions' | 'problems' | 'solutions' | 'journal' | 'resources' | 'files' | 'progress';
+type SectionKey = 'overview' | 'tasks' | 'notes' | 'decisions' | 'problems' | 'journal' | 'resources' | 'files' | 'progress';
 
 function iconPath(d: string) {
   return (
@@ -45,8 +47,7 @@ const SECTIONS: { key: SectionKey; label: string; icon: () => JSX.Element }[] = 
   { key: 'tasks', label: 'Tasks', icon: () => iconPath('M9 12l2 2 4-4M3 3h18v18H3z') },
   { key: 'notes', label: 'Notes', icon: () => iconPath('M4 3h16v18H4zM8 8h8M8 12h8M8 16h5') },
   { key: 'decisions', label: 'Decisions', icon: () => iconPath('M12 3v6M8 21h8M9 9l3 3 3-3M6 9a6 6 0 0012 0') },
-  { key: 'problems', label: 'Problems', icon: () => iconPath('M12 9v4M12 17v.01M10.3 4.5 2.9 17a2 2 0 001.7 3h14.8a2 2 0 001.7-3L13.7 4.5a2 2 0 00-3.4 0z') },
-  { key: 'solutions', label: 'Solutions', icon: () => iconPath('M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.6.5 1 1.3 1 2.1V16h6v-.4c0-.8.4-1.6 1-2.1A6 6 0 0012 3z') },
+  { key: 'problems', label: 'Problem & Solution', icon: () => iconPath('M12 9v4M12 17v.01M10.3 4.5 2.9 17a2 2 0 001.7 3h14.8a2 2 0 001.7-3L13.7 4.5a2 2 0 00-3.4 0z') },
   { key: 'journal', label: 'Journal', icon: () => iconPath('M5 4h11a2 2 0 012 2v14l-4-3-4 3-4-3-4 3V6a2 2 0 013-2z') },
   { key: 'resources', label: 'Resources', icon: () => iconPath('M10 13a4 4 0 006 0l3-3a4 4 0 00-6-6l-1 1M14 11a4 4 0 00-6 0l-3 3a4 4 0 006 6l1-1') },
   { key: 'files', label: 'Files', icon: () => iconPath('M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1zM14 3v5h5') },
@@ -62,6 +63,8 @@ export function ProjectDetailPage({ projectId, onBack }: ProjectDetailPageProps)
   const addMilestone = useAddProjectMilestone();
   const removeMilestone = useRemoveProjectMilestone();
   const moveMilestone = useMoveProjectMilestone();
+  const addMilestoneTask = useAddMilestoneTask();
+  const removeMilestoneTask = useRemoveMilestoneTask();
   const addLinkedItem = useAddProjectLinkedItem();
   const removeLinkedItem = useRemoveProjectLinkedItem();
   const addResource = useAddProjectResource();
@@ -204,17 +207,30 @@ export function ProjectDetailPage({ projectId, onBack }: ProjectDetailPageProps)
 
       {section === 'notes' && <RichNotesEditor value={project.notes} onSave={(html) => updateNotes.mutate({ projectId: project.id, notes: html })} />}
 
-      {(section === 'decisions' || section === 'problems' || section === 'solutions') && (
+      {section === 'decisions' && (
         <EntryLinkSection
-          entryType={section === 'decisions' ? 'Decision' : section === 'problems' ? 'Problem' : 'Solution'}
-          linkedRefs={project[section === 'decisions' ? 'decisions' : section === 'problems' ? 'problems' : 'solutions']}
+          entryType="Decision"
+          linkedRefs={project.decisions}
           allEntries={entries ?? []}
-          onLinkExisting={(ref) => addLinkedItem.mutate({ projectId: project.id, category: section, ref })}
-          onCreateNew={async (title, entryType) => {
-            const entry = await createEntry.mutateAsync({ title, description: '', type: entryType, priority: 'Medium', tags: [], dueDate: null });
-            addLinkedItem.mutate({ projectId: project.id, category: section, ref: { type: 'entry', id: entry.id, title: entry.title } });
+          onLinkExisting={(ref) => addLinkedItem.mutate({ projectId: project.id, category: 'decisions', ref })}
+          onCreateNew={async (title, description) => {
+            const entry = await createEntry.mutateAsync({ title, description, type: 'Decision', priority: 'Medium', tags: [], dueDate: null });
+            addLinkedItem.mutate({ projectId: project.id, category: 'decisions', ref: { type: 'entry', id: entry.id, title: entry.title } });
           }}
-          onRemove={(refId) => removeLinkedItem.mutate({ projectId: project.id, category: section, refId })}
+          onRemove={(refId) => removeLinkedItem.mutate({ projectId: project.id, category: 'decisions', refId })}
+        />
+      )}
+
+      {section === 'problems' && (
+        <ProblemSolutionSection
+          linkedRefs={project.problems}
+          allEntries={(entries ?? []).filter((e) => e.type === 'Problem')}
+          onLinkExisting={(ref) => addLinkedItem.mutate({ projectId: project.id, category: 'problems', ref })}
+          onCreateNew={async (problem, solutionHtml) => {
+            const entry = await createEntry.mutateAsync({ title: problem, description: solutionHtml, type: 'Problem', priority: 'Medium', tags: [], dueDate: null });
+            addLinkedItem.mutate({ projectId: project.id, category: 'problems', ref: { type: 'entry', id: entry.id, title: entry.title } });
+          }}
+          onRemove={(refId) => removeLinkedItem.mutate({ projectId: project.id, category: 'problems', refId })}
         />
       )}
 
@@ -223,8 +239,8 @@ export function ProjectDetailPage({ projectId, onBack }: ProjectDetailPageProps)
           <JournalLinkSection
             existingEntries={unlinkedJournalEntries}
             onLinkExisting={(id, title) => addLinkedItem.mutate({ projectId: project.id, category: 'journal', ref: { type: 'journal', id, title } })}
-            onCreateNew={async (content) => {
-              const entry = await createJournalEntry.mutateAsync({ date: new Date().toISOString().slice(0, 10), logType: 'Meeting', content, wins: [], mistakes: [], learnings: [], gratitude: [], mood: 3, tags: [] });
+            onCreateNew={async (contentHtml) => {
+              const entry = await createJournalEntry.mutateAsync({ date: new Date().toISOString().slice(0, 10), logType: 'Meeting', content: contentHtml, wins: [], mistakes: [], learnings: [], gratitude: [], mood: 3, tags: [] });
               addLinkedItem.mutate({ projectId: project.id, category: 'journal', ref: { type: 'journal', id: entry.id, title: `${entry.logType} log` } });
             }}
           />
@@ -276,19 +292,25 @@ export function ProjectDetailPage({ projectId, onBack }: ProjectDetailPageProps)
             <InlineAddRow placeholder="Add a milestone…" onAdd={(title) => addMilestone.mutate({ projectId: project.id, title })} />
             {project.milestones.length === 0 && <p className="muted-text" style={{ marginTop: 10 }}>No milestones yet.</p>}
             {project.milestones.map((m, index) => (
-              <div className="skill-list-row" key={m.id} style={{ marginTop: 8 }}>
-                <MoveButtons
-                  canMoveUp={index > 0}
-                  canMoveDown={index < project.milestones.length - 1}
-                  onMoveUp={() => moveMilestone.mutate({ projectId: project.id, milestoneId: m.id, direction: 'up' })}
-                  onMoveDown={() => moveMilestone.mutate({ projectId: project.id, milestoneId: m.id, direction: 'down' })}
-                />
-                <label className="task-checklist-item" style={{ flex: 1 }}>
-                  <input type="checkbox" checked={m.done} onChange={() => toggleMilestone.mutate({ projectId: project.id, milestoneId: m.id })} />
-                  <span className={m.done ? 'task-done' : ''}>{m.title}</span>
-                </label>
-                <button className="skill-delete-btn" onClick={() => removeMilestone.mutate({ projectId: project.id, milestoneId: m.id })}>Remove</button>
-              </div>
+              <MilestoneWithTasks
+                key={m.id}
+                milestone={m}
+                canMoveUp={index > 0}
+                canMoveDown={index < project.milestones.length - 1}
+                existingTasks={unlinkedTasks}
+                allTasks={tasks ?? []}
+                onMoveUp={() => moveMilestone.mutate({ projectId: project.id, milestoneId: m.id, direction: 'up' })}
+                onMoveDown={() => moveMilestone.mutate({ projectId: project.id, milestoneId: m.id, direction: 'down' })}
+                onToggle={() => toggleMilestone.mutate({ projectId: project.id, milestoneId: m.id })}
+                onRemove={() => removeMilestone.mutate({ projectId: project.id, milestoneId: m.id })}
+                onLinkExistingTask={(taskId, taskTitle) => addMilestoneTask.mutate({ projectId: project.id, milestoneId: m.id, taskId, taskTitle })}
+                onCreateNewTask={async (title) => {
+                  const task = await createTask.mutateAsync({ title, description: '', priority: 'Medium', dueDate: null, tags: [], effortEstimateHours: null, recurring: 'None' });
+                  addMilestoneTask.mutate({ projectId: project.id, milestoneId: m.id, taskId: task.id, taskTitle: task.title });
+                }}
+                onRemoveTask={(taskId) => removeMilestoneTask.mutate({ projectId: project.id, milestoneId: m.id, taskId })}
+                onToggleTaskStatus={(taskId, done) => updateTaskStatus.mutate({ id: taskId, status: done ? 'Open' : 'Done' })}
+              />
             ))}
           </div>
         </div>
@@ -385,12 +407,13 @@ function EntryLinkSection({ entryType, linkedRefs, allEntries, onLinkExisting, o
   linkedRefs: LinkRef[];
   allEntries: { id: string; title: string; type: EntryType }[];
   onLinkExisting: (ref: LinkRef) => void;
-  onCreateNew: (title: string, entryType: EntryType) => Promise<void>;
+  onCreateNew: (title: string, description: string) => Promise<void>;
   onRemove: (refId: string) => void;
 }) {
   const [mode, setMode] = useState<'existing' | 'new'>('new');
   const [entryId, setEntryId] = useState('');
   const [newTitle, setNewTitle] = useState('');
+  const [descriptionHtml, setDescriptionHtml] = useState('');
   const [creating, setCreating] = useState(false);
   const linkedIds = new Set(linkedRefs.map((r) => r.id));
   const availableEntries = allEntries.filter((e) => e.type === entryType && !linkedIds.has(e.id));
@@ -405,26 +428,27 @@ function EntryLinkSection({ entryType, linkedRefs, allEntries, onLinkExisting, o
     } else {
       if (!newTitle.trim()) return;
       setCreating(true);
-      onCreateNew(newTitle.trim(), entryType).finally(() => { setCreating(false); setNewTitle(''); });
+      onCreateNew(newTitle.trim(), descriptionHtml).finally(() => { setCreating(false); setNewTitle(''); setDescriptionHtml(''); });
     }
   }
 
   return (
     <div className="stat-card">
-      <form className="inline-add-row" style={{ flexDirection: 'column', alignItems: 'stretch' }} onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}>
         <div className="skill-resource-mode-toggle">
           <button type="button" className={mode === 'new' ? 'active' : ''} onClick={() => setMode('new')}>Create new {entryType.toLowerCase()}</button>
           <button type="button" className={mode === 'existing' ? 'active' : ''} onClick={() => setMode('existing')}>Link existing</button>
         </div>
         {mode === 'new' ? (
-          <div className="inline-add-row" style={{ marginTop: 8 }}>
-            <input type="text" placeholder={`New ${entryType.toLowerCase()}… (also appears in Entries)`} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
-            <button type="submit" disabled={!newTitle.trim() || creating}>{creating ? 'Creating…' : '+ Create'}</button>
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <input type="text" placeholder={`${entryType} title\u2026 (also appears in Entries)`} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+            <RichNotesEditor value={descriptionHtml} onSave={setDescriptionHtml} placeholder="Details\u2026" />
+            <button type="submit" disabled={!newTitle.trim() || creating} style={{ alignSelf: 'flex-start' }}>{creating ? 'Creating\u2026' : '+ Create'}</button>
           </div>
         ) : (
           <div className="inline-add-row" style={{ marginTop: 8 }}>
             <select value={entryId} onChange={(e) => setEntryId(e.target.value)}>
-              <option value="">Choose an existing {entryType.toLowerCase()}…</option>
+              <option value="">Choose an existing {entryType.toLowerCase()}\u2026</option>
               {availableEntries.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
             </select>
             <button type="submit" disabled={!entryId}>+ Link</button>
@@ -445,11 +469,11 @@ function EntryLinkSection({ entryType, linkedRefs, allEntries, onLinkExisting, o
 function JournalLinkSection({ existingEntries, onLinkExisting, onCreateNew }: {
   existingEntries: { id: string; logType: string; date: string }[];
   onLinkExisting: (id: string, title: string) => void;
-  onCreateNew: (content: string) => Promise<void>;
+  onCreateNew: (contentHtml: string) => Promise<void>;
 }) {
   const [mode, setMode] = useState<'existing' | 'new'>('new');
   const [entryId, setEntryId] = useState('');
-  const [content, setContent] = useState('');
+  const [contentHtml, setContentHtml] = useState('');
   const [creating, setCreating] = useState(false);
 
   function handleSubmit(e: FormEvent) {
@@ -460,27 +484,27 @@ function JournalLinkSection({ existingEntries, onLinkExisting, onCreateNew }: {
       onLinkExisting(entry.id, `${entry.logType} log (${entry.date})`);
       setEntryId('');
     } else {
-      if (!content.trim()) return;
+      if (!contentHtml.trim()) return;
       setCreating(true);
-      onCreateNew(content.trim()).finally(() => { setCreating(false); setContent(''); });
+      onCreateNew(contentHtml).finally(() => { setCreating(false); setContentHtml(''); });
     }
   }
 
   return (
-    <form className="inline-add-row" style={{ flexDirection: 'column', alignItems: 'stretch' }} onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit}>
       <div className="skill-resource-mode-toggle">
         <button type="button" className={mode === 'new' ? 'active' : ''} onClick={() => setMode('new')}>Create new entry</button>
         <button type="button" className={mode === 'existing' ? 'active' : ''} onClick={() => setMode('existing')}>Link existing</button>
       </div>
       {mode === 'new' ? (
-        <div className="inline-add-row" style={{ marginTop: 8 }}>
-          <input type="text" placeholder="Meeting note content… (also appears in Journal)" value={content} onChange={(e) => setContent(e.target.value)} />
-          <button type="submit" disabled={!content.trim() || creating}>{creating ? 'Creating…' : '+ Create'}</button>
+        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <RichNotesEditor value={contentHtml} onSave={setContentHtml} placeholder="Meeting note content\u2026 (also appears in Journal)" />
+          <button type="submit" disabled={!contentHtml.trim() || creating} style={{ alignSelf: 'flex-start' }}>{creating ? 'Creating\u2026' : '+ Create'}</button>
         </div>
       ) : (
         <div className="inline-add-row" style={{ marginTop: 8 }}>
           <select value={entryId} onChange={(e) => setEntryId(e.target.value)}>
-            <option value="">Choose an existing entry…</option>
+            <option value="">Choose an existing entry\u2026</option>
             {existingEntries.map((e) => <option key={e.id} value={e.id}>{e.logType} log ({e.date})</option>)}
           </select>
           <button type="submit" disabled={!entryId}>+ Link</button>
@@ -529,5 +553,114 @@ function AddFileRow({ onAdd }: { onAdd: (title: string, url: string) => void }) 
       {fileName && <span className="muted-text" style={{ fontSize: 12 }}>{fileName}</span>}
       <button type="submit" disabled={!fileUrl}>+ Add</button>
     </form>
+  );
+}
+
+function ProblemSolutionSection({ linkedRefs, allEntries, onLinkExisting, onCreateNew, onRemove }: {
+  linkedRefs: LinkRef[];
+  allEntries: { id: string; title: string }[];
+  onLinkExisting: (ref: LinkRef) => void;
+  onCreateNew: (problem: string, solutionHtml: string) => Promise<void>;
+  onRemove: (refId: string) => void;
+}) {
+  const [mode, setMode] = useState<'existing' | 'new'>('new');
+  const [entryId, setEntryId] = useState('');
+  const [problem, setProblem] = useState('');
+  const [solutionHtml, setSolutionHtml] = useState('');
+  const [creating, setCreating] = useState(false);
+  const linkedIds = new Set(linkedRefs.map((r) => r.id));
+  const availableEntries = allEntries.filter((e) => !linkedIds.has(e.id));
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (mode === 'existing') {
+      const entry = availableEntries.find((en) => en.id === entryId);
+      if (!entry) return;
+      onLinkExisting({ type: 'entry', id: entry.id, title: entry.title });
+      setEntryId('');
+    } else {
+      if (!problem.trim()) return;
+      setCreating(true);
+      onCreateNew(problem.trim(), solutionHtml).finally(() => { setCreating(false); setProblem(''); setSolutionHtml(''); });
+    }
+  }
+
+  return (
+    <div className="stat-card">
+      <form onSubmit={handleSubmit}>
+        <div className="skill-resource-mode-toggle">
+          <button type="button" className={mode === 'new' ? 'active' : ''} onClick={() => setMode('new')}>Create new</button>
+          <button type="button" className={mode === 'existing' ? 'active' : ''} onClick={() => setMode('existing')}>Link existing</button>
+        </div>
+        {mode === 'new' ? (
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <input type="text" placeholder="Problem\u2026 (also appears in Entries)" value={problem} onChange={(e) => setProblem(e.target.value)} />
+            <RichNotesEditor value={solutionHtml} onSave={setSolutionHtml} placeholder="Solution \u2014 code can be pasted here\u2026" />
+            <button type="submit" disabled={!problem.trim() || creating} style={{ alignSelf: 'flex-start' }}>{creating ? 'Creating\u2026' : '+ Create'}</button>
+          </div>
+        ) : (
+          <div className="inline-add-row" style={{ marginTop: 8 }}>
+            <select value={entryId} onChange={(e) => setEntryId(e.target.value)}>
+              <option value="">Choose an existing problem\u2026</option>
+              {availableEntries.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
+            </select>
+            <button type="submit" disabled={!entryId}>+ Link</button>
+          </div>
+        )}
+      </form>
+      {linkedRefs.length === 0 && <p className="muted-text" style={{ marginTop: 10 }}>No problems logged yet.</p>}
+      {linkedRefs.map((ref) => (
+        <div className="skill-resource-row" key={ref.id}>
+          <span style={{ flex: 1 }}>{ref.title}</span>
+          <button className="skill-delete-btn" onClick={() => onRemove(ref.id)}>Remove</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MilestoneWithTasks({
+  milestone, canMoveUp, canMoveDown, existingTasks, allTasks,
+  onMoveUp, onMoveDown, onToggle, onRemove, onLinkExistingTask, onCreateNewTask, onRemoveTask, onToggleTaskStatus,
+}: {
+  milestone: { id: string; title: string; done: boolean; tasks: LinkRef[] };
+  canMoveUp: boolean; canMoveDown: boolean;
+  existingTasks: { id: string; title: string }[];
+  allTasks: { id: string; title: string; status: string }[];
+  onMoveUp: () => void; onMoveDown: () => void; onToggle: () => void; onRemove: () => void;
+  onLinkExistingTask: (taskId: string, taskTitle: string) => void;
+  onCreateNewTask: (title: string) => Promise<void>;
+  onRemoveTask: (taskId: string) => void;
+  onToggleTaskStatus: (taskId: string, currentlyDone: boolean) => void;
+}) {
+  return (
+    <div className="milestone-group" style={{ marginTop: 10 }}>
+      <div className="skill-list-row milestone-group-header">
+        <MoveButtons canMoveUp={canMoveUp} canMoveDown={canMoveDown} onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
+        <label className="task-checklist-item" style={{ flex: 1 }}>
+          <input type="checkbox" checked={milestone.done} onChange={onToggle} />
+          <span className={milestone.done ? 'task-done' : ''}>{milestone.title}</span>
+          {milestone.tasks.length > 0 && <span className="milestone-count">{milestone.tasks.length} task{milestone.tasks.length === 1 ? '' : 's'}</span>}
+        </label>
+        <button className="skill-delete-btn" onClick={onRemove}>Remove</button>
+      </div>
+      <div className="milestone-syllabus">
+        {milestone.tasks.map((t) => {
+          const task = allTasks.find((task) => task.id === t.id);
+          const done = task?.status === 'Done';
+          return (
+            <div className="skill-resource-row" key={t.id}>
+              <label className="task-checklist-item" style={{ flex: 1 }}>
+                <input type="checkbox" checked={done} onChange={() => onToggleTaskStatus(t.id, done)} />
+                <span className={done ? 'task-done' : ''}>{t.title}</span>
+              </label>
+              {task && <span className="entry-type-badge">{task.status}</span>}
+              <button className="skill-delete-btn" onClick={() => onRemoveTask(t.id)}>Remove</button>
+            </div>
+          );
+        })}
+        <TaskLinkSection existingTasks={existingTasks} onLinkExisting={onLinkExistingTask} onCreateNew={onCreateNewTask} />
+      </div>
+    </div>
   );
 }

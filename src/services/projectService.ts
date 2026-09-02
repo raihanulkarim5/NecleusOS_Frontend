@@ -17,6 +17,8 @@ export interface ProjectService {
   addMilestone(projectId: string, title: string): Promise<Project>;
   removeMilestone(projectId: string, milestoneId: string): Promise<Project>;
   moveMilestone(projectId: string, milestoneId: string, direction: 'up' | 'down'): Promise<Project>;
+  addMilestoneTask(projectId: string, milestoneId: string, taskId: string, taskTitle: string): Promise<Project>;
+  removeMilestoneTask(projectId: string, milestoneId: string, taskId: string): Promise<Project>;
 
   addLinkedItem(projectId: string, category: ProjectLinkCategory, ref: LinkRef): Promise<Project>;
   removeLinkedItem(projectId: string, category: ProjectLinkCategory, refId: string): Promise<Project>;
