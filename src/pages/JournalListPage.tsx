@@ -354,10 +354,11 @@ function AddJournalModal({
 
   return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal journal-modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-title">Add journal entry</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="journal-modal-top">
+        <form onSubmit={handleSubmit} className="journal-modal-form">
+          {/* Top Row: Type + Mood */}
+          <div className="journal-modal-top-row">
             <div className="field">
               <label htmlFor="log-type">Type</label>
               <select id="log-type" value={logType} onChange={(e) => setLogType(e.target.value as JournalLogType)}>
@@ -366,7 +367,7 @@ function AddJournalModal({
                 ))}
               </select>
             </div>
-            <div className="field">
+            <div className="field mood-field">
               <label>Mood</label>
               <div className="mood-picker">
                 {[1, 2, 3, 4, 5].map((m) => (
@@ -382,6 +383,7 @@ function AddJournalModal({
             </div>
           </div>
 
+          {/* Content Textarea */}
           <div className="field">
             <label htmlFor="content">What happened today?</label>
             <textarea
@@ -389,68 +391,71 @@ function AddJournalModal({
               placeholder="Describe your day…"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              rows={4}
+              rows={3}
               required
             />
           </div>
 
-          <div className="journal-modal-lists">
+          {/* Reflection Fields - 2x2 Grid */}
+          <div className="journal-modal-reflections">
             <div className="field">
-              <label htmlFor="wins">Wins (comma separated)</label>
+              <label htmlFor="wins">Wins</label>
               <input
                 id="wins"
                 type="text"
-                placeholder="e.g., Shipped feature, Great meeting"
+                placeholder="Shipped feature…"
                 value={wins}
                 onChange={(e) => setWins(e.target.value)}
               />
             </div>
             <div className="field">
-              <label htmlFor="mistakes">Mistakes (comma separated)</label>
+              <label htmlFor="mistakes">Mistakes</label>
               <input
                 id="mistakes"
                 type="text"
-                placeholder="e.g., Forgot deadline, Miscommunication"
+                placeholder="Missed deadline…"
                 value={mistakes}
                 onChange={(e) => setMistakes(e.target.value)}
               />
             </div>
             <div className="field">
-              <label htmlFor="learnings">Learnings (comma separated)</label>
+              <label htmlFor="learnings">Learnings</label>
               <input
                 id="learnings"
                 type="text"
-                placeholder="e.g., Process improvement, Technical insight"
+                placeholder="Technical insight…"
                 value={learnings}
                 onChange={(e) => setLearnings(e.target.value)}
               />
             </div>
             <div className="field">
-              <label htmlFor="gratitude">Gratitude (comma separated)</label>
+              <label htmlFor="gratitude">Gratitude</label>
               <input
                 id="gratitude"
                 type="text"
-                placeholder="e.g., Good team support, Clear weather"
+                placeholder="Good team support…"
                 value={gratitude}
                 onChange={(e) => setGratitude(e.target.value)}
               />
             </div>
           </div>
 
+          {/* Tags */}
           <div className="field">
-            <label htmlFor="tags">Tags (comma separated)</label>
+            <label htmlFor="tags">Tags</label>
             <input
               id="tags"
               type="text"
-              placeholder="e.g., work, important, favorite"
+              placeholder="work, important, favorite"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
             />
           </div>
 
+          {/* Actions */}
           <div className="modal-actions">
             <button type="button" className="modal-cancel" onClick={onClose}>Cancel</button>
-            <button type="submit" className="auth-submit">Save entry</button>
+            <button type="submit" className="modal-submit">Save entry</button>
           </div>
         </form>
       </div>
