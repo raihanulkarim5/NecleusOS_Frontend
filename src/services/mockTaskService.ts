@@ -1,5 +1,5 @@
 import type { TaskService } from './taskService';
-import type { Task, TaskDraft, TaskStatus } from '../types/task';
+import type { Task, TaskDraft, TaskStatus, TaskUpdate } from '../types/task';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const today = () => new Date().toISOString().slice(0, 10);
@@ -23,6 +23,7 @@ let tasks: Task[] = [
     recurring: 'None',
     links: [],
     favorite: true,
+    order: 0,
     createdAt: '2026-08-17',
     updatedAt: '2026-08-17',
   },
@@ -43,6 +44,7 @@ let tasks: Task[] = [
     recurring: 'None',
     links: [],
     favorite: false,
+    order: 1,
     createdAt: '2026-08-10',
     updatedAt: '2026-08-15',
   },
@@ -59,6 +61,7 @@ let tasks: Task[] = [
     recurring: 'None',
     links: [],
     favorite: false,
+    order: 2,
     createdAt: '2026-08-12',
     updatedAt: '2026-08-12',
   },
@@ -75,6 +78,7 @@ let tasks: Task[] = [
     recurring: 'Weekly',
     links: [],
     favorite: false,
+    order: 3,
     createdAt: '2026-08-17',
     updatedAt: '2026-08-17',
   },
@@ -94,6 +98,7 @@ let tasks: Task[] = [
     recurring: 'None',
     links: [],
     favorite: false,
+    order: 4,
     createdAt: '2026-08-13',
     updatedAt: '2026-08-14',
   },
@@ -102,7 +107,14 @@ let tasks: Task[] = [
 export const mockTaskService: TaskService = {
   async getTasks(): Promise<Task[]> {
     await delay(400);
-    return [...tasks].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    return [...tasks].sort((a, b) => a.order - b.order);
+  },
+
+  async getTask(id: string): Promise<Task> {
+    await delay(200);
+    const task = tasks.find((t) => t.id === id);
+    if (!task) throw new Error('Task not found');
+    return { ...task };
   },
 
   async createTask(draft: TaskDraft): Promise<Task> {
@@ -115,11 +127,35 @@ export const mockTaskService: TaskService = {
       checklist: [],
       links: [],
       favorite: false,
+      order: tasks.length,
       createdAt: now,
       updatedAt: now,
     };
     tasks = [task, ...tasks];
     return task;
+  },
+
+  async updateTask(id: string, updates: TaskUpdate): Promise<Task> {
+    await delay(300);
+    const idx = tasks.findIndex((t) => t.id === id);
+    if (idx === -1) throw new Error('Task not found');
+    
+    const task = tasks[idx];
+    const updated: Task = {
+      ...task,
+      ...updates,
+      id: task.id,
+      createdAt: task.createdAt,
+      updatedAt: today(),
+    };
+    
+    tasks[idx] = updated;
+    return { ...updated };
+  },
+
+  async deleteTask(id: string): Promise<void> {
+    await delay(300);
+    tasks = tasks.filter((t) => t.id !== id);
   },
 
   async updateStatus(id: string, status: TaskStatus): Promise<Task> {

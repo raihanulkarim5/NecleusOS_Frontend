@@ -23,6 +23,7 @@ export interface Task {
   recurring: RecurringFrequency;
   links: LinkRef[];
   favorite: boolean;
+  order: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,4 +36,17 @@ export interface TaskDraft {
   tags: string[];
   effortEstimateHours: number | null;
   recurring: RecurringFrequency;
+}
+
+export interface TaskUpdate {
+  title?: string;
+  description?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  dueDate?: string | null;
+  checklist?: ChecklistItem[];
+  tags?: string[];
+  effortEstimateHours?: number | null;
+  recurring?: RecurringFrequency;
+  links?: LinkRef[];
 }
