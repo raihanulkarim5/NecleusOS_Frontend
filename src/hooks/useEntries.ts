@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { entryService } from '../services';
-import type { Entry, EntryDraft } from '../types/entry';
+import type { Entry, EntryDraft, EntryUpdate } from '../types/entry';
 
 export function useEntries() {
   return useQuery({
@@ -9,27 +9,47 @@ export function useEntries() {
   });
 }
 
+export function useEntry(id: string) {
+  return useQuery({
+    queryKey: ['entry', id],
+    queryFn: () => entryService.getEntry(id),
+  });
+}
+
 export function useCreateEntry() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (draft: EntryDraft) => entryService.createEntry(draft),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['entries'] }),
+    onSuccess: (newEntry: Entry) => {
+      queryClient.setQueryData(['entries'], (old: Entry[] | undefined) => (old ? [newEntry, ...old] : [newEntry]));
+    },
   });
 }
 
-export function useUpdateEntryStatus() {
+export function useUpdateEntry() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: Entry['status'] }) =>
-      entryService.updateStatus(id, status),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['entries'] }),
+    mutationFn: ({ id, updates }: { id: string; updates: EntryUpdate }) => entryService.updateEntry(id, updates),
+    onSuccess: (updated: Entry) => {
+      queryClient.setQueryData(['entry', updated.id], updated);
+      queryClient.setQueryData(
+        ['entries'],
+        (old: Entry[] | undefined) => (old ? old.map(e => (e.id === updated.id ? updated : e)) : [updated]),
+      );
+    },
   });
 }
 
-export function useToggleFavorite() {
+export function useDeleteEntry() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => entryService.toggleFavorite(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['entries'] }),
+    mutationFn: (id: string) => entryService.deleteEntry(id),
+    onSuccess: (_, id: string) => {
+      queryClient.setQueryData(
+        ['entries'],
+        (old: Entry[] | undefined) => (old ? old.filter(e => e.id !== id) : []),
+      );
+      queryClient.removeQueries({ queryKey: ['entry', id] });
+    },
   });
 }

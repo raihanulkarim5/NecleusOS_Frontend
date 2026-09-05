@@ -3,7 +3,7 @@ import { useLogout, useSession } from './hooks/useAuth';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { EntriesPage } from './pages/EntriesPage';
+import { EntriesModule } from './pages/EntriesModule';
 import { TasksModule } from './pages/TasksModule';
 import { JournalModule } from './pages/JournalModule';
 import { FinanceModule } from './pages/FinanceModule';
@@ -35,7 +35,7 @@ export function App() {
     <AppShell active={activeTab} onNavigate={setActiveTab} onSignOut={() => logout.mutate()}>
       {activeTab === 'dashboard' && <DashboardPage />}
       {activeTab === 'inbox' && <InboxPage />}
-      {activeTab === 'entries' && <EntriesPage />}
+      {activeTab === 'entries' && <EntriesModule />}
       {activeTab === 'tasks' && <TasksModule />}
       {activeTab === 'journal' && <JournalModule />}
       {activeTab === 'finance' && <FinanceModule />}

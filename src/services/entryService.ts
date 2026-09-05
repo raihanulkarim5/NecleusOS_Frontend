@@ -1,9 +1,9 @@
-import type { Entry, EntryDraft } from '../types/entry';
+import type { Entry, EntryDraft, EntryUpdate } from '../types/entry';
 
 export interface EntryService {
   getEntries(): Promise<Entry[]>;
-  getEntry(id: string): Promise<Entry | null>;
+  getEntry(id: string): Promise<Entry>;
   createEntry(draft: EntryDraft): Promise<Entry>;
-  updateStatus(id: string, status: Entry['status']): Promise<Entry>;
-  toggleFavorite(id: string): Promise<Entry>;
+  updateEntry(id: string, updates: EntryUpdate): Promise<Entry>;
+  deleteEntry(id: string): Promise<void>;
 }
