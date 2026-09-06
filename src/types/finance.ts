@@ -109,6 +109,7 @@ export interface DebtLoan {
   purpose: string;
   date: string;              // Date loan/debt created
   dueDate?: string;           // Expected repayment date
+  paidDate?: string;          // Actual payment date
   status: 'Open' | 'Partial' | 'Settled';
   amountRemaining: number;
   notes: string;
@@ -141,6 +142,7 @@ export interface DebtLoanUpdate {
   personAddress?: string;
   purpose?: string;
   dueDate?: string;
+  paidDate?: string;
   status?: 'Open' | 'Partial' | 'Settled';
   amountRemaining?: number;
   notes?: string;

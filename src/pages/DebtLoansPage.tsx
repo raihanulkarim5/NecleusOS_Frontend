@@ -1,20 +1,53 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useDebtLoans, useCreateDebtLoan } from '../hooks/useFinance';
-import type { DebtLoanDraft, DebtType } from '../types/finance';
+import { useDebtLoans, useCreateDebtLoan, useUpdateDebtLoan } from '../hooks/useFinance';
+import type { DebtLoanDraft, DebtType, DebtLoanUpdate } from '../types/finance';
 
 export function DebtLoansPage() {
   const { data: debts } = useDebtLoans();
   const createDebtLoan = useCreateDebtLoan();
+  const updateDebtLoan = useUpdateDebtLoan();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedDebtId, setSelectedDebtId] = useState<string | null>(null);
+  const [filterPerson, setFilterPerson] = useState<string | 'All'>('All');
 
-  const totalDebt = debts?.reduce((sum, d) => sum + d.amountRemaining, 0) ?? 0;
-  const totalGiven = debts?.filter((d) => d.type === 'Loan Given').reduce((sum, d) => sum + d.amountRemaining, 0) ?? 0;
+  // Get unique persons for filter
+  const persons = useMemo(() => {
+    const unique = new Set<string>();
+    debts?.forEach((d) => unique.add(d.personName));
+    return Array.from(unique).sort();
+  }, [debts]);
+
+  // Filter debts by person
+  const filtered = useMemo(() => {
+    if (filterPerson === 'All') return debts ?? [];
+    return (debts ?? []).filter((d) => d.personName === filterPerson);
+  }, [debts, filterPerson]);
+
+  const totalDebt = filtered.reduce((sum, d) => sum + d.amountRemaining, 0);
+  const totalGiven = filtered.filter((d) => d.type === 'Loan Given').reduce((sum, d) => sum + d.amountRemaining, 0);
+
+  const selectedDebt = debts?.find((d) => d.id === selectedDebtId);
 
   return (
     <div>
       <h2>Debts & Loans</h2>
-      <button className="debts-add-btn" onClick={() => setShowAddModal(true)}>+ Add debt/loan</button>
+      <div className="debts-header">
+        <button className="debts-add-btn" onClick={() => setShowAddModal(true)}>+ Add debt/loan</button>
+      </div>
+
+      {/* Person Filter */}
+      {persons.length > 0 && (
+        <div className="debts-filter">
+          <select value={filterPerson} onChange={(e) => setFilterPerson(e.target.value)}>
+            <option value="All">All people</option>
+            {persons.map((person) => (
+              <option key={person} value={person}>{person}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="debts-summary">
         <div className="debt-stat">
@@ -27,13 +60,36 @@ export function DebtLoansPage() {
         </div>
       </div>
 
-      {debts && debts.length > 0 ? (
+      {filtered && filtered.length > 0 ? (
         <div className="debts-list">
-          {debts.map((debt) => (
+          {filtered.map((debt) => (
             <div key={debt.id} className={`debt-item debt-type-${debt.type.replace(' ', '-').toLowerCase()}`}>
               <div className="debt-header">
-                <h3>{debt.personName}</h3>
-                <span className={`debt-badge debt-${debt.type.replace(' ', '-').toLowerCase()}`}>{debt.type}</span>
+                <div>
+                  <h3>{debt.personName}</h3>
+                  <span className="debt-contact-info">
+                    {debt.personPhone && <span>{debt.personPhone}</span>}
+                    {debt.personEmail && <span>{debt.personEmail}</span>}
+                  </span>
+                </div>
+                <div className="debt-actions">
+                  <span className={`debt-badge debt-${debt.type.replace(' ', '-').toLowerCase()}`}>{debt.type}</span>
+                  {debt.status === 'Settled' && (
+                    <span className="debt-paid-badge">✓ Paid {debt.paidDate}</span>
+                  )}
+                  {debt.status !== 'Settled' && (
+                    <button className="debt-mark-paid-btn" onClick={() => {
+                      updateDebtLoan.mutate({
+                        id: debt.id,
+                        updates: {
+                          status: 'Settled',
+                          amountRemaining: 0,
+                          paidDate: new Date().toISOString().slice(0, 10),
+                        },
+                      });
+                    }}>Mark paid</button>
+                  )}
+                </div>
               </div>
               <div className="debt-details">
                 <div className="detail-row">
@@ -44,8 +100,7 @@ export function DebtLoansPage() {
                   <span>Remaining:</span>
                   <strong>${debt.amountRemaining.toFixed(2)}</strong>
                 </div>
-                {debt.personPhone && <div className="detail-row"><span>Phone:</span><span>{debt.personPhone}</span></div>}
-                {debt.personEmail && <div className="detail-row"><span>Email:</span><span>{debt.personEmail}</span></div>}
+                {debt.personAddress && <div className="detail-row"><span>Address:</span><span>{debt.personAddress}</span></div>}
                 <div className="detail-row">
                   <span>Purpose:</span>
                   <span>{debt.purpose}</span>
@@ -55,6 +110,7 @@ export function DebtLoansPage() {
                   <span>{debt.date}</span>
                 </div>
                 {debt.dueDate && <div className="detail-row"><span>Due:</span><span>{debt.dueDate}</span></div>}
+                {debt.paidDate && <div className="detail-row"><span>Paid:</span><span>{debt.paidDate}</span></div>}
                 <div className="detail-row">
                   <span>Status:</span>
                   <span className={`debt-status status-${debt.status.toLowerCase()}`}>{debt.status}</span>

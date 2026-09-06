@@ -180,6 +180,25 @@ let debtsLoans: DebtLoan[] = [
     createdAt: '2026-07-15',
     updatedAt: today(),
   },
+  {
+    id: 'debt-4',
+    type: 'Loan Given',
+    amount: 300.00,
+    personName: 'Alex Johnson',
+    personPhone: '+1-555-0101',
+    personEmail: 'alex@example.com',
+    purpose: 'Lunch money',
+    date: '2026-08-05',
+    dueDate: '2026-08-15',
+    paidDate: '2026-08-15',
+    status: 'Settled',
+    amountRemaining: 0.00,
+    notes: 'Previous loan, settled on time',
+    links: [],
+    order: 3,
+    createdAt: '2026-08-05',
+    updatedAt: '2026-08-15',
+  },
 ];
 
 let categories: Category[] = [...defaultCategories];

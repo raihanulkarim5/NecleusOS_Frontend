@@ -4075,3 +4075,98 @@ select optgroup {
   max-height: 90vh;
   overflow-y: auto;
 }
+
+/* Debt/Loan Person Filter */
+.debts-filter {
+  margin-bottom: 20px;
+}
+
+.debts-filter select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.debts-filter select:focus {
+  border-color: var(--violet);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.debts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Debt Item Updates */
+.debt-contact-info {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.debt-contact-info span {
+  display: inline-block;
+}
+
+.debt-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.debt-mark-paid-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--cyan);
+  background: transparent;
+  color: var(--cyan);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.debt-mark-paid-btn:hover {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: var(--cyan);
+}
+
+.debt-mark-paid-btn:active {
+  transform: scale(0.95);
+}
+
+.debt-paid-badge {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(111, 207, 124, 0.2);
+  color: #6fcf7c;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.debt-item .detail-row {
+  padding: 4px 0;
+}
+
+.debt-item .detail-row span:last-child {
+  color: var(--ink);
+}
+
