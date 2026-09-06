@@ -3776,3 +3776,302 @@ select optgroup {
 .entries-edit-form {
   max-width: 600px;
 }
+
+/* Finance Entry Forms */
+.finance-modal-form,
+.expenses-modal-form,
+.budgets-modal-form,
+.debts-modal-form {
+  display: grid;
+  gap: 14px;
+}
+
+.finance-modal-row,
+.expenses-modal-row,
+.budgets-modal-row,
+.debts-modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.expenses-header,
+.budgets-header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.expenses-add-btn,
+.budgets-add-btn,
+.debts-add-btn,
+.finance-add-account-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(56, 189, 248, 0.2));
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.expenses-add-btn:hover,
+.budgets-add-btn:hover,
+.debts-add-btn:hover,
+.finance-add-account-btn:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(56, 189, 248, 0.3));
+  transform: translateY(-1px);
+}
+
+.expenses-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.1);
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.expenses-total strong {
+  color: var(--cyan);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.expense-item {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.expense-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expense-category {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.expense-note {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.expense-amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.expense-date,
+.expense-method {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.budget-item {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  margin-bottom: 12px;
+}
+
+.budget-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.budget-category {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.budget-limit {
+  font-size: 13px;
+  color: var(--cyan);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.budget-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.budget-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--violet), var(--magenta));
+  transition: width 0.3s ease;
+}
+
+.budget-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.budget-spent,
+.budget-remaining {
+  font-size: 12px;
+}
+
+.debts-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.debt-stat {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.debt-stat strong {
+  color: var(--ink);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.debt-item {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  margin-bottom: 12px;
+}
+
+.debt-type-loan-given {
+  border-left: 4px solid var(--cyan);
+}
+
+.debt-type-loan-received {
+  border-left: 4px solid var(--violet);
+}
+
+.debt-type-debt {
+  border-left: 4px solid #ff6b9d;
+}
+
+.debt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.debt-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.debt-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.debt-loan-given {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--cyan);
+}
+
+.debt-loan-received {
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--violet);
+}
+
+.debt-debt {
+  background: rgba(255, 107, 157, 0.2);
+  color: #ff6b9d;
+}
+
+.debt-details {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.detail-row span:first-child {
+  color: var(--muted);
+}
+
+.detail-row strong {
+  color: var(--ink);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.debt-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.debt-status.status-open {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--cyan);
+}
+
+.debt-status.status-partial {
+  background: rgba(255, 107, 157, 0.2);
+  color: #ff6b9d;
+}
+
+.debt-status.status-settled {
+  background: rgba(111, 207, 124, 0.2);
+  color: #6fcf7c;
+}
+
+.debt-notes {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 8px;
+  border-top: 1px solid var(--card-border);
+  margin-top: 8px;
+}
+
+.finance-modal,
+.expenses-modal,
+.budgets-modal,
+.debts-modal {
+  max-height: 90vh;
+  overflow-y: auto;
+}
