@@ -1,6 +1,7 @@
 import type { FinanceService, MonthSummary } from './financeService';
 import type { 
-  BankAccount, Expense, Budget, Category, DebtLoan,
+  BankAccount, BankAccountDraft, BankAccountUpdate, BankCardDraft, BankCardUpdate, CredentialsUpdate,
+  Expense, Budget, Category, DebtLoan, BudgetPlan, BudgetPlanDraft, BudgetPlanUpdate,
   ExpenseDraft, ExpenseUpdate, BudgetDraft, BudgetUpdate,
   DebtLoanDraft, DebtLoanUpdate 
 } from '../types/finance';
@@ -27,7 +28,18 @@ let bankAccounts: BankAccount[] = [
     accountNumberMasked: '****2891',
     currency: 'USD',
     balance: 5420.75,
-    cards: [],
+    cards: [
+      {
+        id: 'card-1',
+        cardNumber: '**** **** **** 4432',
+        cardholderName: 'Raihanul Karim',
+        expiryMonth: 8,
+        expiryYear: 2028,
+        cvv: '***',
+        isDefault: true,
+        credentials: { encryptedPassword: '[ENCRYPTED]', encryptedPin: '[ENCRYPTED]', lastVerified: today() },
+      },
+    ],
     credentials: {
       encryptedPassword: '[ENCRYPTED]',
       encryptedPin: '[ENCRYPTED]',
@@ -99,31 +111,35 @@ let expenses: Expense[] = [
 ];
 
 let budgets: Budget[] = [
+  { id: 'bud-1', categoryId: 'cat-food', monthlyLimit: 500.00, month: thisMonth(), order: 0, createdAt: thisMonth() + '-01', updatedAt: today() },
+  { id: 'bud-2', categoryId: 'cat-transport', monthlyLimit: 300.00, month: thisMonth(), order: 1, createdAt: thisMonth() + '-01', updatedAt: today() },
+  { id: 'bud-3', categoryId: 'cat-entertainment', monthlyLimit: 200.00, month: thisMonth(), order: 2, createdAt: thisMonth() + '-01', updatedAt: today() },
+];
+
+let budgetPlans: BudgetPlan[] = [
   {
-    id: 'bud-1',
-    categoryId: 'cat-food',
-    monthlyLimit: 500.00,
-    month: thisMonth(),
+    id: 'plan-1',
+    name: 'New laptop (business)',
+    planType: 'Business',
+    targetAmount: 2200,
+    currentAmount: 650,
+    targetDate: '2026-12-01',
+    notes: 'Upgrade dev machine for NecleusOS work',
+    links: [],
     order: 0,
-    createdAt: thisMonth() + '-01',
+    createdAt: '2026-07-01',
     updatedAt: today(),
   },
   {
-    id: 'bud-2',
-    categoryId: 'cat-transport',
-    monthlyLimit: 300.00,
-    month: thisMonth(),
+    id: 'plan-2',
+    name: 'Emergency fund',
+    planType: 'Goal',
+    targetAmount: 10000,
+    currentAmount: 4200,
+    notes: '6 months of expenses buffer',
+    links: [],
     order: 1,
-    createdAt: thisMonth() + '-01',
-    updatedAt: today(),
-  },
-  {
-    id: 'bud-3',
-    categoryId: 'cat-entertainment',
-    monthlyLimit: 200.00,
-    month: thisMonth(),
-    order: 2,
-    createdAt: thisMonth() + '-01',
+    createdAt: '2026-05-01',
     updatedAt: today(),
   },
 ];
@@ -216,11 +232,22 @@ export const mockFinanceService: FinanceService = {
     return { ...acc };
   },
 
-  async createAccount(account) {
+  async createAccount(draft: BankAccountDraft) {
     await delay(400);
     const newAcc: BankAccount = {
-      ...account,
+      bankName: draft.bankName,
+      accountType: draft.accountType,
+      accountNumberMasked: `****${draft.accountNumberLast4.slice(-4)}`,
+      currency: draft.currency,
+      balance: draft.balance,
+      cards: [],
+      credentials: {
+        encryptedPassword: '[NOT SET]',
+        encryptedPin: '[NOT SET]',
+        lastVerified: today(),
+      },
       id: `acc-${Date.now()}`,
+      order: bankAccounts.length,
       createdAt: today(),
       updatedAt: today(),
     };
@@ -228,7 +255,7 @@ export const mockFinanceService: FinanceService = {
     return newAcc;
   },
 
-  async updateAccount(id, updates) {
+  async updateAccount(id: string, updates: BankAccountUpdate) {
     await delay(300);
     const idx = bankAccounts.findIndex(a => a.id === id);
     if (idx === -1) throw new Error('Account not found');
@@ -237,9 +264,66 @@ export const mockFinanceService: FinanceService = {
     return { ...updated };
   },
 
-  async deleteAccount(id) {
+  async deleteAccount(id: string) {
     await delay(300);
     bankAccounts = bankAccounts.filter(a => a.id !== id);
+  },
+
+  async updateAccountCredentials(id: string, updates: CredentialsUpdate) {
+    await delay(400);
+    const idx = bankAccounts.findIndex(a => a.id === id);
+    if (idx === -1) throw new Error('Account not found');
+    bankAccounts[idx] = {
+      ...bankAccounts[idx],
+      credentials: {
+        encryptedPassword: '[ENCRYPTED]', // never store/echo plaintext, even in mock
+        encryptedPin: '[ENCRYPTED]',
+        lastVerified: today(),
+      },
+      updatedAt: today(),
+    };
+    return { ...bankAccounts[idx] };
+  },
+
+  async addCard(accountId: string, draft: BankCardDraft) {
+    await delay(350);
+    const idx = bankAccounts.findIndex(a => a.id === accountId);
+    if (idx === -1) throw new Error('Account not found');
+    const newCard = {
+      id: `card-${Date.now()}`,
+      cardNumber: `**** **** **** ${draft.cardNumberLast4.slice(-4)}`,
+      cardholderName: draft.cardholderName,
+      expiryMonth: draft.expiryMonth,
+      expiryYear: draft.expiryYear,
+      cvv: '***',
+      isDefault: draft.isDefault,
+      credentials: { encryptedPassword: '[N/A]', encryptedPin: '[N/A]', lastVerified: today() },
+    };
+    const cards = draft.isDefault
+      ? bankAccounts[idx].cards.map(c => ({ ...c, isDefault: false }))
+      : [...bankAccounts[idx].cards];
+    bankAccounts[idx] = { ...bankAccounts[idx], cards: [...cards, newCard], updatedAt: today() };
+    return { ...bankAccounts[idx] };
+  },
+
+  async updateCard(accountId: string, cardId: string, updates: BankCardUpdate) {
+    await delay(300);
+    const idx = bankAccounts.findIndex(a => a.id === accountId);
+    if (idx === -1) throw new Error('Account not found');
+    let cards = bankAccounts[idx].cards.map(c => c.id === cardId ? { ...c, ...updates } : c);
+    if (updates.isDefault) {
+      cards = cards.map(c => c.id === cardId ? c : { ...c, isDefault: false });
+    }
+    bankAccounts[idx] = { ...bankAccounts[idx], cards, updatedAt: today() };
+    return { ...bankAccounts[idx] };
+  },
+
+  async deleteCard(accountId: string, cardId: string) {
+    await delay(300);
+    const idx = bankAccounts.findIndex(a => a.id === accountId);
+    if (idx === -1) throw new Error('Account not found');
+    bankAccounts[idx] = { ...bankAccounts[idx], cards: bankAccounts[idx].cards.filter(c => c.id !== cardId), updatedAt: today() };
+    return { ...bankAccounts[idx] };
   },
 
   async getCategories() {
@@ -354,6 +438,46 @@ export const mockFinanceService: FinanceService = {
   async getBudgetsByMonth(month) {
     await delay(300);
     return budgets.filter(b => b.month === month).sort((a, b) => a.order - b.order);
+  },
+
+  async getBudgetPlans() {
+    await delay(350);
+    return [...budgetPlans].sort((a, b) => a.order - b.order);
+  },
+
+  async getBudgetPlan(id: string) {
+    await delay(200);
+    const plan = budgetPlans.find(p => p.id === id);
+    if (!plan) throw new Error('Budget plan not found');
+    return { ...plan };
+  },
+
+  async createBudgetPlan(draft: BudgetPlanDraft) {
+    await delay(400);
+    const newPlan: BudgetPlan = {
+      ...draft,
+      id: `plan-${Date.now()}`,
+      links: [],
+      order: budgetPlans.length,
+      createdAt: today(),
+      updatedAt: today(),
+    };
+    budgetPlans.push(newPlan);
+    return newPlan;
+  },
+
+  async updateBudgetPlan(id: string, updates: BudgetPlanUpdate) {
+    await delay(300);
+    const idx = budgetPlans.findIndex(p => p.id === id);
+    if (idx === -1) throw new Error('Budget plan not found');
+    const updated = { ...budgetPlans[idx], ...updates, id, createdAt: budgetPlans[idx].createdAt, updatedAt: today() };
+    budgetPlans[idx] = updated;
+    return { ...updated };
+  },
+
+  async deleteBudgetPlan(id: string) {
+    await delay(300);
+    budgetPlans = budgetPlans.filter(p => p.id !== id);
   },
 
   async getDebtLoans() {

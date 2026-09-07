@@ -4170,3 +4170,401 @@ select optgroup {
   color: var(--ink);
 }
 
+
+/* ===== FINANCE MODULE — RENOVATION ===== */
+
+.finance-tabs {
+  margin-bottom: 24px;
+}
+
+.finance-section-header {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.finance-manage-btn {
+  background: none;
+  border: none;
+  color: var(--cyan);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: opacity 0.2s ease;
+}
+
+.finance-manage-btn:hover {
+  opacity: 0.8;
+}
+
+.account-currency {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.budget-fill.over {
+  background: linear-gradient(90deg, #ff6b9d, #ff3b5c);
+}
+
+.budget-remaining.over-text {
+  color: #ff6b9d;
+  font-weight: 600;
+}
+
+.muted-text {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Banking List Page */
+.banking-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.banking-toolbar input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.banking-toolbar input:focus {
+  border-color: var(--violet);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.banking-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.banking-card {
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.banking-card:hover {
+  border-color: var(--cyan);
+  background: rgba(56, 189, 248, 0.08);
+  transform: translateY(-2px);
+}
+
+.banking-card-footer {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--card-border);
+}
+
+.finance-security-hint {
+  font-size: 11px;
+  color: var(--cyan);
+  margin: -4px 0 4px 0;
+}
+
+/* Account Detail Page */
+.account-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.account-balance-large {
+  font-size: 18px;
+  font-weight: 600;
+  color: #6fcf7c;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Security Panel */
+.security-panel {
+  display: block;
+}
+
+.security-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(111, 207, 124, 0.08);
+  border: 1px solid rgba(111, 207, 124, 0.25);
+}
+
+.security-icon {
+  font-size: 22px;
+}
+
+.security-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.security-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.security-form {
+  margin-top: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.security-success {
+  color: #6fcf7c;
+  font-size: 12px;
+  margin-top: 12px;
+}
+
+.security-error {
+  color: #ff6b9d;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.security-note-small {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 16px;
+}
+
+/* Cards Grid */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.bank-card-visual {
+  position: relative;
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(56, 189, 248, 0.15));
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.bank-card-visual.default {
+  border-color: var(--cyan);
+}
+
+.card-default-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(56, 189, 248, 0.25);
+  color: var(--cyan);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.card-number {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: var(--ink);
+  margin-top: 10px;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+
+.card-label-small {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+
+.card-value-small {
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* Expenses Toolbar */
+.expenses-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.expenses-toolbar input,
+.expenses-toolbar select {
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 12px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.expenses-toolbar input {
+  flex: 1;
+  min-width: 160px;
+}
+
+.expenses-toolbar input:focus,
+.expenses-toolbar select:focus {
+  border-color: var(--violet);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.expense-item {
+  cursor: pointer;
+  position: relative;
+}
+
+.expense-delete-btn {
+  position: static;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.expense-item:hover .expense-delete-btn {
+  opacity: 1;
+}
+
+/* Budget item actions */
+.budget-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Budget Plans */
+.plans-intro {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 14px;
+  max-width: 560px;
+}
+
+.plans-list {
+  display: grid;
+  gap: 12px;
+}
+
+.plan-item {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+}
+
+.plan-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.plan-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.plan-type-asset {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--cyan);
+}
+
+.plan-type-business {
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--violet);
+}
+
+.plan-type-goal {
+  background: rgba(111, 207, 124, 0.2);
+  color: #6fcf7c;
+}
+
+.plan-type-other {
+  background: rgba(160, 174, 192, 0.2);
+  color: #a0aec0;
+}
+
+.plan-target-date {
+  font-size: 11px;
+  color: var(--cyan);
+  margin-top: 6px;
+}
+
+/* Debts filters */
+.debts-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.debts-filters select {
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.debts-filters select:focus {
+  border-color: var(--violet);
+  background: rgba(139, 92, 246, 0.1);
+}

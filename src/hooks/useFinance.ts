@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { financeService } from '../services';
 import type {
-  BankAccount, Expense, Budget, DebtLoan,
+  BankAccount, BankAccountDraft, BankAccountUpdate, BankCardDraft, BankCardUpdate, CredentialsUpdate,
+  Expense, Budget, DebtLoan, BudgetPlan, BudgetPlanDraft, BudgetPlanUpdate,
   ExpenseDraft, ExpenseUpdate, BudgetDraft, BudgetUpdate,
-  DebtLoanDraft, DebtLoanUpdate
+  DebtLoanDraft, DebtLoanUpdate, Category,
 } from '../types/finance';
 
 // Bank Accounts
@@ -18,13 +19,21 @@ export function useBankAccount(id: string) {
   return useQuery({
     queryKey: ['bank-account', id],
     queryFn: () => financeService.getAccount(id),
+    enabled: !!id,
   });
+}
+
+function upsertAccount(queryClient: ReturnType<typeof useQueryClient>, updated: BankAccount) {
+  queryClient.setQueryData(['bank-account', updated.id], updated);
+  queryClient.setQueryData(['bank-accounts'], (old: BankAccount[] | undefined) =>
+    old ? old.map(a => a.id === updated.id ? updated : a) : [updated]
+  );
 }
 
 export function useCreateBankAccount() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (account: Omit<BankAccount, 'id' | 'createdAt' | 'updatedAt'>) => financeService.createAccount(account),
+    mutationFn: (draft: BankAccountDraft) => financeService.createAccount(draft),
     onSuccess: (newAccount) => {
       queryClient.setQueryData(['bank-accounts'], (old: BankAccount[] | undefined) => (old ? [...old, newAccount] : [newAccount]));
     },
@@ -34,14 +43,9 @@ export function useCreateBankAccount() {
 export function useUpdateBankAccount() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Omit<BankAccount, 'id' | 'createdAt' | 'updatedAt'>> }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: BankAccountUpdate }) =>
       financeService.updateAccount(id, updates),
-    onSuccess: (updated) => {
-      queryClient.setQueryData(['bank-account', updated.id], updated);
-      queryClient.setQueryData(['bank-accounts'], (old: BankAccount[] | undefined) =>
-        old ? old.map(a => a.id === updated.id ? updated : a) : [updated]
-      );
-    },
+    onSuccess: (updated) => upsertAccount(queryClient, updated),
   });
 }
 
@@ -58,6 +62,60 @@ export function useDeleteBankAccount() {
   });
 }
 
+export function useUpdateAccountCredentials() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: CredentialsUpdate }) =>
+      financeService.updateAccountCredentials(id, updates),
+    onSuccess: (updated) => upsertAccount(queryClient, updated),
+  });
+}
+
+export function useAddCard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ accountId, draft }: { accountId: string; draft: BankCardDraft }) =>
+      financeService.addCard(accountId, draft),
+    onSuccess: (updated) => upsertAccount(queryClient, updated),
+  });
+}
+
+export function useUpdateCard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ accountId, cardId, updates }: { accountId: string; cardId: string; updates: BankCardUpdate }) =>
+      financeService.updateCard(accountId, cardId, updates),
+    onSuccess: (updated) => upsertAccount(queryClient, updated),
+  });
+}
+
+export function useDeleteCard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ accountId, cardId }: { accountId: string; cardId: string }) =>
+      financeService.deleteCard(accountId, cardId),
+    onSuccess: (updated) => upsertAccount(queryClient, updated),
+  });
+}
+
+// Categories
+export function useCategories() {
+  return useQuery({
+    queryKey: ['categories'],
+    queryFn: () => financeService.getCategories(),
+  });
+}
+
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (category: Omit<Category, 'id'>) => financeService.createCategory(category),
+    onSuccess: (newCategory) => {
+      queryClient.setQueryData(['categories'], (old: Category[] | undefined) => (old ? [...old, newCategory] : [newCategory]));
+    },
+  });
+}
+
 // Expenses
 export function useExpenses() {
   return useQuery({
@@ -70,6 +128,7 @@ export function useExpense(id: string) {
   return useQuery({
     queryKey: ['expense', id],
     queryFn: () => financeService.getExpense(id),
+    enabled: !!id,
   });
 }
 
@@ -119,7 +178,7 @@ export function useDeleteExpense() {
   });
 }
 
-// Budgets
+// Budgets (monthly, per category)
 export function useBudgets() {
   return useQuery({
     queryKey: ['budgets'],
@@ -131,6 +190,7 @@ export function useBudget(id: string) {
   return useQuery({
     queryKey: ['budget', id],
     queryFn: () => financeService.getBudget(id),
+    enabled: !!id,
   });
 }
 
@@ -180,6 +240,58 @@ export function useDeleteBudget() {
   });
 }
 
+// Budget Plans (future plans: asset / business / goal)
+export function useBudgetPlans() {
+  return useQuery({
+    queryKey: ['budget-plans'],
+    queryFn: () => financeService.getBudgetPlans(),
+  });
+}
+
+export function useBudgetPlan(id: string) {
+  return useQuery({
+    queryKey: ['budget-plan', id],
+    queryFn: () => financeService.getBudgetPlan(id),
+    enabled: !!id,
+  });
+}
+
+export function useCreateBudgetPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (draft: BudgetPlanDraft) => financeService.createBudgetPlan(draft),
+    onSuccess: (newPlan) => {
+      queryClient.setQueryData(['budget-plans'], (old: BudgetPlan[] | undefined) => (old ? [...old, newPlan] : [newPlan]));
+    },
+  });
+}
+
+export function useUpdateBudgetPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: BudgetPlanUpdate }) => financeService.updateBudgetPlan(id, updates),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['budget-plan', updated.id], updated);
+      queryClient.setQueryData(['budget-plans'], (old: BudgetPlan[] | undefined) =>
+        old ? old.map(p => p.id === updated.id ? updated : p) : [updated]
+      );
+    },
+  });
+}
+
+export function useDeleteBudgetPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => financeService.deleteBudgetPlan(id),
+    onSuccess: (_, id) => {
+      queryClient.setQueryData(['budget-plans'], (old: BudgetPlan[] | undefined) =>
+        old ? old.filter(p => p.id !== id) : []
+      );
+      queryClient.removeQueries({ queryKey: ['budget-plan', id] });
+    },
+  });
+}
+
 // Debt/Loans
 export function useDebtLoans() {
   return useQuery({
@@ -192,6 +304,7 @@ export function useDebtLoan(id: string) {
   return useQuery({
     queryKey: ['debt-loan', id],
     queryFn: () => financeService.getDebtLoan(id),
+    enabled: !!id,
   });
 }
 
@@ -243,26 +356,5 @@ export function useOverallBalance() {
   return useQuery({
     queryKey: ['overall-balance'],
     queryFn: () => financeService.getOverallBalance(),
-  });
-}
-
-// Categories
-export function useCategories() {
-  return useQuery({
-    queryKey: ['categories'],
-    queryFn: () => financeService.getCategories(),
-  });
-}
-
-export function useCreateCategory() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (category: Omit<import('../types/finance').Category, 'id'>) =>
-      financeService.createCategory(category),
-    onSuccess: (newCategory) => {
-      queryClient.setQueryData(['categories'], (old: import('../types/finance').Category[] | undefined) =>
-        (old ? [...old, newCategory] : [newCategory])
-      );
-    },
   });
 }

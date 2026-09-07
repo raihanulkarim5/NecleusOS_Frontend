@@ -1,6 +1,8 @@
 import type { 
-  BankAccount, Budget, Category, Expense, ExpenseDraft, ExpenseUpdate,
-  BudgetDraft, BudgetUpdate, DebtLoan, DebtLoanDraft, DebtLoanUpdate 
+  BankAccount, BankAccountDraft, BankAccountUpdate, BankCard, BankCardDraft, BankCardUpdate, CredentialsUpdate,
+  Budget, Category, Expense, ExpenseDraft, ExpenseUpdate,
+  BudgetDraft, BudgetUpdate, DebtLoan, DebtLoanDraft, DebtLoanUpdate,
+  BudgetPlan, BudgetPlanDraft, BudgetPlanUpdate,
 } from '../types/finance';
 
 export interface MonthSummary {
@@ -16,9 +18,15 @@ export interface FinanceService {
   // Bank Accounts
   getAccounts(): Promise<BankAccount[]>;
   getAccount(id: string): Promise<BankAccount>;
-  createAccount(account: Omit<BankAccount, 'id' | 'createdAt' | 'updatedAt'>): Promise<BankAccount>;
-  updateAccount(id: string, updates: Partial<Omit<BankAccount, 'id' | 'createdAt' | 'updatedAt'>>): Promise<BankAccount>;
+  createAccount(draft: BankAccountDraft): Promise<BankAccount>;
+  updateAccount(id: string, updates: BankAccountUpdate): Promise<BankAccount>;
   deleteAccount(id: string): Promise<void>;
+  updateAccountCredentials(id: string, updates: CredentialsUpdate): Promise<BankAccount>;
+
+  // Bank Cards (nested under an account)
+  addCard(accountId: string, draft: BankCardDraft): Promise<BankAccount>;
+  updateCard(accountId: string, cardId: string, updates: BankCardUpdate): Promise<BankAccount>;
+  deleteCard(accountId: string, cardId: string): Promise<BankAccount>;
 
   // Categories
   getCategories(): Promise<Category[]>;
@@ -34,13 +42,20 @@ export interface FinanceService {
   deleteExpense(id: string): Promise<void>;
   getExpensesByMonth(month: string): Promise<Expense[]>;
 
-  // Budgets
+  // Budgets (monthly, generic by category)
   getBudgets(): Promise<Budget[]>;
   getBudget(id: string): Promise<Budget>;
   createBudget(draft: BudgetDraft): Promise<Budget>;
   updateBudget(id: string, updates: BudgetUpdate): Promise<Budget>;
   deleteBudget(id: string): Promise<void>;
   getBudgetsByMonth(month: string): Promise<Budget[]>;
+
+  // Budget Plans (future plans for assets / business / goals)
+  getBudgetPlans(): Promise<BudgetPlan[]>;
+  getBudgetPlan(id: string): Promise<BudgetPlan>;
+  createBudgetPlan(draft: BudgetPlanDraft): Promise<BudgetPlan>;
+  updateBudgetPlan(id: string, updates: BudgetPlanUpdate): Promise<BudgetPlan>;
+  deleteBudgetPlan(id: string): Promise<void>;
 
   // Debt/Loans
   getDebtLoans(): Promise<DebtLoan[]>;

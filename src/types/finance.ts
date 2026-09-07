@@ -42,6 +42,42 @@ export interface BankAccount {
   updatedAt: string;
 }
 
+export interface BankAccountDraft {
+  bankName: string;
+  accountType: AccountType;
+  accountNumberLast4: string;
+  currency: string;
+  balance: number;
+}
+
+export interface BankAccountUpdate {
+  bankName?: string;
+  accountType?: AccountType;
+  currency?: string;
+  balance?: number;
+}
+
+export interface CredentialsUpdate {
+  newPassword: string;
+  newPin: string;
+}
+
+export interface BankCardDraft {
+  cardNumberLast4: string;
+  cardholderName: string;
+  expiryMonth: number;
+  expiryYear: number;
+  cvv: string;
+  isDefault: boolean;
+}
+
+export interface BankCardUpdate {
+  cardholderName?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+  isDefault?: boolean;
+}
+
 export interface Expense {
   id: string;
   amount: number;
@@ -147,4 +183,40 @@ export interface DebtLoanUpdate {
   amountRemaining?: number;
   notes?: string;
   links?: LinkRef[];
+}
+
+// Future Budget Plans — for a specific asset, business, or long-term goal
+// (distinct from monthly category budgets above)
+export type BudgetPlanType = 'Asset' | 'Business' | 'Goal' | 'Other';
+
+export interface BudgetPlan {
+  id: string;
+  name: string;
+  planType: BudgetPlanType;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate?: string;
+  notes: string;
+  links: LinkRef[];
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BudgetPlanDraft {
+  name: string;
+  planType: BudgetPlanType;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate?: string;
+  notes: string;
+}
+
+export interface BudgetPlanUpdate {
+  name?: string;
+  planType?: BudgetPlanType;
+  targetAmount?: number;
+  currentAmount?: number;
+  targetDate?: string;
+  notes?: string;
 }
