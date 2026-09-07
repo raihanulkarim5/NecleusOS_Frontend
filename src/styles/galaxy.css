@@ -4584,11 +4584,30 @@ select optgroup {
 
 /* ===== FINANCE — POLISH PASS 2 ===== */
 
-/* Custom-styled selects everywhere in Finance forms */
+/* .field never had a base style for <select>, only <input> — selects were
+   rendering as bare native controls. Give them the same box as .field input,
+   plus a custom arrow instead of the browser default. */
+.field select {
+  width: 100%;
+  padding: 10px 32px 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.field select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .field select,
 .expenses-toolbar select,
-.debts-filters select,
-.month-input {
+.debts-filters select {
   appearance: none;
   -webkit-appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238b5cf6' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
