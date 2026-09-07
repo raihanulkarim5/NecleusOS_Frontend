@@ -12,27 +12,16 @@ const CATEGORY_NAMES: Record<string, string> = {
 
 interface FinanceOverviewPageProps {
   month: string;
-  onMonthChange: (month: string) => void;
   onManageAccounts: () => void;
 }
 
-export function FinanceOverviewPage({ month, onMonthChange, onManageAccounts }: FinanceOverviewPageProps) {
+export function FinanceOverviewPage({ month, onManageAccounts }: FinanceOverviewPageProps) {
   const { data: summary, isLoading: summaryLoading } = useMonthSummary(month);
   const { data: overallBalance } = useOverallBalance();
   const { data: accounts } = useBankAccounts();
 
   return (
     <div>
-      {/* Month Selector */}
-      <div className="finance-month-selector">
-        <input
-          type="month"
-          value={month}
-          onChange={(e) => onMonthChange(e.target.value)}
-          className="month-input"
-        />
-      </div>
-
       {/* Overall Balance Card */}
       <div className="finance-card overall-balance">
         <div className="card-label">Overall Balance</div>

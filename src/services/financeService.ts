@@ -2,7 +2,7 @@ import type {
   BankAccount, BankAccountDraft, BankAccountUpdate, BankCard, BankCardDraft, BankCardUpdate, CredentialsUpdate,
   Budget, Category, Expense, ExpenseDraft, ExpenseUpdate,
   BudgetDraft, BudgetUpdate, DebtLoan, DebtLoanDraft, DebtLoanUpdate,
-  BudgetPlan, BudgetPlanDraft, BudgetPlanUpdate,
+  BudgetPlan, BudgetPlanDraft, BudgetPlanUpdate, Person, PersonDraft,
 } from '../types/finance';
 
 export interface MonthSummary {
@@ -22,6 +22,8 @@ export interface FinanceService {
   updateAccount(id: string, updates: BankAccountUpdate): Promise<BankAccount>;
   deleteAccount(id: string): Promise<void>;
   updateAccountCredentials(id: string, updates: CredentialsUpdate): Promise<BankAccount>;
+  addBalanceEntry(id: string, entry: { date: string; amount: number; note: string }): Promise<BankAccount>;
+  getBalanceHistoryByMonth(id: string, month: string): Promise<BankAccount['balanceHistory']>;
 
   // Bank Cards (nested under an account)
   addCard(accountId: string, draft: BankCardDraft): Promise<BankAccount>;
@@ -56,6 +58,10 @@ export interface FinanceService {
   createBudgetPlan(draft: BudgetPlanDraft): Promise<BudgetPlan>;
   updateBudgetPlan(id: string, updates: BudgetPlanUpdate): Promise<BudgetPlan>;
   deleteBudgetPlan(id: string): Promise<void>;
+
+  // People (for Debts & Loans)
+  getPersons(): Promise<Person[]>;
+  createPerson(draft: PersonDraft): Promise<Person>;
 
   // Debt/Loans
   getDebtLoans(): Promise<DebtLoan[]>;

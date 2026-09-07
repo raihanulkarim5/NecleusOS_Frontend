@@ -70,28 +70,38 @@ export function FinanceModule() {
       </div>
       <h1 className="page-title">Finance</h1>
 
-      <div className="sub-tabs finance-tabs">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.key}
-              className={`sub-tab${activeTab === tab.key ? ' active' : ''}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              <span className="sub-tab-icon"><Icon /></span>
-              {tab.label}
-            </button>
-          );
-        })}
+      <div className="finance-tabs-row">
+        <div className="sub-tabs finance-tabs">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.key}
+                className={`sub-tab${activeTab === tab.key ? ' active' : ''}`}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                <span className="sub-tab-icon"><Icon /></span>
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+        {(activeTab === 'overview' || activeTab === 'expenses' || activeTab === 'budgets') && (
+          <input
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="month-input finance-tabs-row-filter"
+          />
+        )}
       </div>
 
       {activeTab === 'overview' && (
-        <FinanceOverviewPage month={selectedMonth} onMonthChange={setSelectedMonth} onManageAccounts={() => setActiveTab('banking')} />
+        <FinanceOverviewPage month={selectedMonth} onManageAccounts={() => setActiveTab('banking')} />
       )}
-      {activeTab === 'expenses' && <ExpensesListPage month={selectedMonth} onMonthChange={setSelectedMonth} />}
+      {activeTab === 'expenses' && <ExpensesListPage month={selectedMonth} />}
       {activeTab === 'banking' && <BankingModule />}
-      {activeTab === 'budgets' && <BudgetsPage month={selectedMonth} onMonthChange={setSelectedMonth} />}
+      {activeTab === 'budgets' && <BudgetsPage month={selectedMonth} />}
       {activeTab === 'debts' && <DebtLoansPage />}
     </div>
   );

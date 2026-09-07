@@ -16,7 +16,7 @@ export function BankingListPage({ onOpenAccount }: BankingListPageProps) {
   const filtered = useMemo(() => {
     if (!search.trim()) return accounts ?? [];
     const q = search.toLowerCase();
-    return (accounts ?? []).filter((a) => a.bankName.toLowerCase().includes(q));
+    return (accounts ?? []).filter((a) => a.bankName.toLowerCase().includes(q) || a.branch.toLowerCase().includes(q));
   }, [accounts, search]);
 
   const totalBalance = (accounts ?? []).reduce((sum, a) => sum + a.balance, 0);
@@ -26,7 +26,7 @@ export function BankingListPage({ onOpenAccount }: BankingListPageProps) {
       <div className="banking-toolbar">
         <input
           type="text"
-          placeholder="Search banks…"
+          placeholder="Search banks or branches…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -46,7 +46,7 @@ export function BankingListPage({ onOpenAccount }: BankingListPageProps) {
                 <div className="account-name">{acc.bankName}</div>
                 <div className="account-type">{acc.accountType}</div>
               </div>
-              <div className="account-number">{acc.accountNumberMasked}</div>
+              <div className="account-number">{acc.accountNumberMasked} · {acc.branch}</div>
               <div className="account-balance">${acc.balance.toFixed(2)} <span className="account-currency">{acc.currency}</span></div>
               <div className="banking-card-footer">
                 <span className="security-note">🔒 {acc.cards.length} card{acc.cards.length !== 1 ? 's' : ''} · 2FA secured</span>
@@ -73,10 +73,12 @@ export function BankingListPage({ onOpenAccount }: BankingListPageProps) {
 
 function AddBankAccountModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (draft: BankAccountDraft) => void }) {
   const [bankName, setBankName] = useState('');
+  const [branch, setBranch] = useState('');
   const [accountType, setAccountType] = useState<AccountType>('Checking');
   const [accountNumber, setAccountNumber] = useState('');
   const [currency, setCurrency] = useState('USD');
   const [balance, setBalance] = useState('');
+  const [notes, setNotes] = useState('');
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -84,10 +86,12 @@ function AddBankAccountModal({ onClose, onSubmit }: { onClose: () => void; onSub
 
     onSubmit({
       bankName: bankName.trim(),
+      branch: branch.trim(),
       accountType,
       accountNumberLast4: accountNumber.trim(),
       currency: currency.trim() || 'USD',
       balance: parseFloat(balance) || 0,
+      notes: notes.trim(),
     });
   }
 
@@ -96,16 +100,15 @@ function AddBankAccountModal({ onClose, onSubmit }: { onClose: () => void; onSub
       <div className="modal finance-modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-title">Add bank account</h2>
         <form onSubmit={handleSubmit} className="finance-modal-form">
-          <div className="field">
-            <label>Bank Name</label>
-            <input
-              type="text"
-              placeholder="e.g., First Bank, Chase, Wells Fargo"
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              required
-              autoFocus
-            />
+          <div className="finance-modal-row">
+            <div className="field">
+              <label>Bank Name</label>
+              <input type="text" placeholder="e.g., First Bank" value={bankName} onChange={(e) => setBankName(e.target.value)} required autoFocus />
+            </div>
+            <div className="field">
+              <label>Branch</label>
+              <input type="text" placeholder="e.g., Gulshan Branch" value={branch} onChange={(e) => setBranch(e.target.value)} />
+            </div>
           </div>
 
           <div className="finance-modal-row">
@@ -123,27 +126,20 @@ function AddBankAccountModal({ onClose, onSubmit }: { onClose: () => void; onSub
             </div>
           </div>
 
-          <div className="field">
-            <label>Account Number (last 4 digits)</label>
-            <input
-              type="text"
-              placeholder="e.g., 5678"
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))}
-              maxLength={4}
-              required
-            />
+          <div className="finance-modal-row">
+            <div className="field">
+              <label>Account Number (last 4 digits)</label>
+              <input type="text" placeholder="e.g., 5678" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))} maxLength={4} required />
+            </div>
+            <div className="field">
+              <label>Opening Balance</label>
+              <input type="number" placeholder="0.00" value={balance} onChange={(e) => setBalance(e.target.value)} step="0.01" />
+            </div>
           </div>
 
           <div className="field">
-            <label>Current Balance</label>
-            <input
-              type="number"
-              placeholder="0.00"
-              value={balance}
-              onChange={(e) => setBalance(e.target.value)}
-              step="0.01"
-            />
+            <label>Other Info (optional)</label>
+            <input type="text" placeholder="e.g., joint account, linked to business" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
           <p className="finance-security-hint">

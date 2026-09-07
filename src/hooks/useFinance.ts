@@ -4,7 +4,7 @@ import type {
   BankAccount, BankAccountDraft, BankAccountUpdate, BankCardDraft, BankCardUpdate, CredentialsUpdate,
   Expense, Budget, DebtLoan, BudgetPlan, BudgetPlanDraft, BudgetPlanUpdate,
   ExpenseDraft, ExpenseUpdate, BudgetDraft, BudgetUpdate,
-  DebtLoanDraft, DebtLoanUpdate, Category,
+  DebtLoanDraft, DebtLoanUpdate, Category, Person, PersonDraft,
 } from '../types/finance';
 
 // Bank Accounts
@@ -68,6 +68,45 @@ export function useUpdateAccountCredentials() {
     mutationFn: ({ id, updates }: { id: string; updates: CredentialsUpdate }) =>
       financeService.updateAccountCredentials(id, updates),
     onSuccess: (updated) => upsertAccount(queryClient, updated),
+  });
+}
+
+export function useAddBalanceEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, entry }: { id: string; entry: { date: string; amount: number; note: string } }) =>
+      financeService.addBalanceEntry(id, entry),
+    onSuccess: (updated) => {
+      upsertAccount(queryClient, updated);
+      queryClient.invalidateQueries({ queryKey: ['overall-balance'] });
+      queryClient.invalidateQueries({ queryKey: ['balance-history'] });
+    },
+  });
+}
+
+export function useBalanceHistoryByMonth(accountId: string, month: string) {
+  return useQuery({
+    queryKey: ['balance-history', accountId, month],
+    queryFn: () => financeService.getBalanceHistoryByMonth(accountId, month),
+    enabled: !!accountId,
+  });
+}
+
+// People (for Debts & Loans)
+export function usePersons() {
+  return useQuery({
+    queryKey: ['persons'],
+    queryFn: () => financeService.getPersons(),
+  });
+}
+
+export function useCreatePerson() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (draft: PersonDraft) => financeService.createPerson(draft),
+    onSuccess: (newPerson) => {
+      queryClient.setQueryData(['persons'], (old: Person[] | undefined) => (old ? [...old, newPerson] : [newPerson]));
+    },
   });
 }
 

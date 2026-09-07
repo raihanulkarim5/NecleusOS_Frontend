@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useDebtLoans, useCreateDebtLoan, useUpdateDebtLoan, useDeleteDebtLoan } from '../hooks/useFinance';
-import type { DebtLoan, DebtLoanDraft, DebtLoanUpdate, DebtType } from '../types/finance';
+import { useDebtLoans, useCreateDebtLoan, useUpdateDebtLoan, useDeleteDebtLoan, usePersons, useCreatePerson } from '../hooks/useFinance';
+import type { DebtLoan, DebtLoanDraft, DebtLoanUpdate, DebtType, Person } from '../types/finance';
 
 type StatusFilter = 'All' | 'Open' | 'Partial' | 'Settled';
 type TypeFilter = 'All' | DebtType;
@@ -140,12 +140,21 @@ function DebtLoanFormModal({
   onClose: () => void;
   onSave: (payload: DebtLoanDraft | DebtLoanUpdate) => void;
 }) {
+  const { data: persons } = usePersons();
+  const createPerson = useCreatePerson();
   const today = new Date().toISOString().slice(0, 10);
+
   const [type, setType] = useState<DebtType>(initial?.type ?? 'Loan Given');
+
+  // Person selection: pick existing person by id, or reveal inline "new person" fields
+  const initialPersonId = initial ? persons?.find((p) => p.name === initial.personName)?.id ?? '' : '';
+  const [selectedPersonId, setSelectedPersonId] = useState(initialPersonId);
+  const [addingPerson, setAddingPerson] = useState(!initial && !persons?.length);
   const [personName, setPersonName] = useState(initial?.personName ?? '');
   const [personPhone, setPersonPhone] = useState(initial?.personPhone ?? '');
   const [personEmail, setPersonEmail] = useState(initial?.personEmail ?? '');
   const [personAddress, setPersonAddress] = useState(initial?.personAddress ?? '');
+
   const [amount, setAmount] = useState(initial ? String(initial.amount) : '');
   const [amountRemaining, setAmountRemaining] = useState(initial ? String(initial.amountRemaining) : '');
   const [purpose, setPurpose] = useState(initial?.purpose ?? '');
@@ -155,14 +164,28 @@ function DebtLoanFormModal({
   const [status, setStatus] = useState<'Open' | 'Partial' | 'Settled'>(initial?.status ?? 'Open');
   const [notes, setNotes] = useState(initial?.notes ?? '');
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!personName.trim() || !amount.trim() || !purpose.trim()) return;
+  function handlePersonSelect(value: string) {
+    if (value === '__add_new__') {
+      setAddingPerson(true);
+      setSelectedPersonId('');
+      return;
+    }
+    setAddingPerson(false);
+    setSelectedPersonId(value);
+    const person = persons?.find((p) => p.id === value);
+    if (person) {
+      setPersonName(person.name);
+      setPersonPhone(person.phone ?? '');
+      setPersonEmail(person.email ?? '');
+      setPersonAddress(person.address ?? '');
+    }
+  }
 
+  function buildPayloadAndSave(finalPersonName: string) {
     if (initial) {
       onSave({
         amount: parseFloat(amount),
-        personName: personName.trim(),
+        personName: finalPersonName,
         personPhone: personPhone.trim() || undefined,
         personEmail: personEmail.trim() || undefined,
         personAddress: personAddress.trim() || undefined,
@@ -176,7 +199,7 @@ function DebtLoanFormModal({
     } else {
       onSave({
         type,
-        personName: personName.trim(),
+        personName: finalPersonName,
         personPhone: personPhone.trim() || undefined,
         personEmail: personEmail.trim() || undefined,
         personAddress: personAddress.trim() || undefined,
@@ -191,11 +214,32 @@ function DebtLoanFormModal({
     }
   }
 
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!personName.trim() || !amount.trim() || !purpose.trim()) return;
+
+    // If adding a brand-new person, save them to the People list first so
+    // they're available in the picker for next time.
+    if (addingPerson && !initial) {
+      createPerson.mutate(
+        {
+          name: personName.trim(),
+          phone: personPhone.trim() || undefined,
+          email: personEmail.trim() || undefined,
+          address: personAddress.trim() || undefined,
+        },
+        { onSuccess: () => buildPayloadAndSave(personName.trim()) },
+      );
+    } else {
+      buildPayloadAndSave(personName.trim());
+    }
+  }
+
   return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal debts-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal debts-modal wide" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-title">{title}</h2>
-        <form onSubmit={handleSubmit} className="debts-modal-form">
+        <form onSubmit={handleSubmit} className="debts-modal-form horizontal">
           <div className="field">
             <label>Type</label>
             <select value={type} onChange={(e) => setType(e.target.value as DebtType)} disabled={!!initial}>
@@ -206,51 +250,94 @@ function DebtLoanFormModal({
           </div>
 
           <div className="field">
-            <label>Person Name *</label>
-            <input type="text" placeholder="e.g., John Doe" value={personName} onChange={(e) => setPersonName(e.target.value)} required autoFocus />
+            <label>Status</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value as any)}>
+              <option value="Open">Open</option>
+              <option value="Partial">Partial</option>
+              <option value="Settled">Settled</option>
+            </select>
           </div>
 
-          <div className="debts-modal-row">
-            <div className="field"><label>Phone (optional)</label><input type="tel" placeholder="+1-555-0000" value={personPhone} onChange={(e) => setPersonPhone(e.target.value)} /></div>
-            <div className="field"><label>Email (optional)</label><input type="email" placeholder="john@example.com" value={personEmail} onChange={(e) => setPersonEmail(e.target.value)} /></div>
+          <div className="field field-full">
+            <label>Person *</label>
+            <div className="person-picker-row">
+              {!addingPerson ? (
+                <>
+                  <select value={selectedPersonId} onChange={(e) => handlePersonSelect(e.target.value)} disabled={!!initial}>
+                    <option value="" disabled>Select a person…</option>
+                    {persons?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    <option value="__add_new__">+ Add new person…</option>
+                  </select>
+                </>
+              ) : (
+                <button type="button" className="add-person-toggle" onClick={() => { setAddingPerson(false); }}>
+                  ← Choose existing person instead
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="field"><label>Address (optional)</label><input type="text" placeholder="123 Main St" value={personAddress} onChange={(e) => setPersonAddress(e.target.value)} /></div>
-
-          <div className="debts-modal-row">
-            <div className="field"><label>Amount *</label><input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} step="0.01" required disabled={!!initial} /></div>
-            <div className="field"><label>Purpose *</label><input type="text" placeholder="e.g., Emergency fund" value={purpose} onChange={(e) => setPurpose(e.target.value)} required /></div>
-          </div>
-
-          {initial && (
-            <div className="field"><label>Amount Remaining</label><input type="number" step="0.01" value={amountRemaining} onChange={(e) => setAmountRemaining(e.target.value)} /></div>
+          {addingPerson && (
+            <div className="new-person-fields">
+              <div className="field field-full">
+                <label>Name *</label>
+                <input type="text" placeholder="e.g., John Doe" value={personName} onChange={(e) => setPersonName(e.target.value)} required autoFocus />
+              </div>
+              <div className="field">
+                <label>Phone (optional)</label>
+                <input type="tel" placeholder="+1-555-0000" value={personPhone} onChange={(e) => setPersonPhone(e.target.value)} />
+              </div>
+              <div className="field">
+                <label>Email (optional)</label>
+                <input type="email" placeholder="john@example.com" value={personEmail} onChange={(e) => setPersonEmail(e.target.value)} />
+              </div>
+              <div className="field field-full">
+                <label>Address (optional)</label>
+                <input type="text" placeholder="123 Main St" value={personAddress} onChange={(e) => setPersonAddress(e.target.value)} />
+              </div>
+            </div>
           )}
 
-          <div className="debts-modal-row">
-            <div className="field"><label>Date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={!!initial} /></div>
-            <div className="field"><label>Due Date (optional)</label><input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
+          <div className="field">
+            <label>Amount *</label>
+            <input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} step="0.01" required disabled={!!initial} />
           </div>
 
-          <div className="debts-modal-row">
+          {initial ? (
             <div className="field">
-              <label>Status</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value as any)}>
-                <option value="Open">Open</option>
-                <option value="Partial">Partial</option>
-                <option value="Settled">Settled</option>
-              </select>
+              <label>Amount Remaining</label>
+              <input type="number" step="0.01" value={amountRemaining} onChange={(e) => setAmountRemaining(e.target.value)} />
             </div>
-            {status === 'Settled' && (
-              <div className="field"><label>Paid Date</label><input type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} /></div>
-            )}
+          ) : (
+            <div className="field">
+              <label>Date</label>
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+          )}
+
+          <div className="field field-full">
+            <label>Purpose *</label>
+            <input type="text" placeholder="e.g., Emergency fund" value={purpose} onChange={(e) => setPurpose(e.target.value)} required />
           </div>
 
           <div className="field">
+            <label>Due Date (optional)</label>
+            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
+
+          {status === 'Settled' && (
+            <div className="field">
+              <label>Paid Date</label>
+              <input type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} />
+            </div>
+          )}
+
+          <div className="field field-full">
             <label>Notes (optional)</label>
             <textarea placeholder="Add any additional notes..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
           </div>
 
-          <div className="modal-actions">
+          <div className="modal-actions field-full">
             <button type="button" className="modal-cancel" onClick={onClose}>Cancel</button>
             <button type="submit" className="modal-submit">{initial ? 'Save changes' : 'Add debt/loan'}</button>
           </div>

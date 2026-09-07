@@ -3,7 +3,7 @@ import type {
   BankAccount, BankAccountDraft, BankAccountUpdate, BankCardDraft, BankCardUpdate, CredentialsUpdate,
   Expense, Budget, Category, DebtLoan, BudgetPlan, BudgetPlanDraft, BudgetPlanUpdate,
   ExpenseDraft, ExpenseUpdate, BudgetDraft, BudgetUpdate,
-  DebtLoanDraft, DebtLoanUpdate 
+  DebtLoanDraft, DebtLoanUpdate, Person, PersonDraft,
 } from '../types/finance';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -24,10 +24,14 @@ let bankAccounts: BankAccount[] = [
   {
     id: 'acc-1',
     bankName: 'First Bank',
+    branch: 'Gulshan Branch',
     accountType: 'Checking',
     accountNumberMasked: '****2891',
     currency: 'USD',
     balance: 5420.75,
+    notes: 'Primary checking account',
+    otpEmailEnabled: true,
+    otpMobileEnabled: false,
     cards: [
       {
         id: 'card-1',
@@ -45,6 +49,9 @@ let bankAccounts: BankAccount[] = [
       encryptedPin: '[ENCRYPTED]',
       lastVerified: today(),
     },
+    balanceHistory: [
+      { id: 'bal-1', date: today(), amount: 5420.75, note: 'Opening balance', createdAt: today() },
+    ],
     order: 0,
     createdAt: '2026-01-15',
     updatedAt: today(),
@@ -52,16 +59,23 @@ let bankAccounts: BankAccount[] = [
   {
     id: 'acc-2',
     bankName: 'Savings Bank',
+    branch: 'Dhanmondi Branch',
     accountType: 'Savings',
     accountNumberMasked: '****7654',
     currency: 'USD',
     balance: 25800.00,
+    notes: 'Long-term savings',
+    otpEmailEnabled: true,
+    otpMobileEnabled: true,
     cards: [],
     credentials: {
       encryptedPassword: '[ENCRYPTED]',
       encryptedPin: '[ENCRYPTED]',
       lastVerified: today(),
     },
+    balanceHistory: [
+      { id: 'bal-2', date: today(), amount: 25800.00, note: 'Opening balance', createdAt: today() },
+    ],
     order: 1,
     createdAt: '2026-02-01',
     updatedAt: today(),
@@ -219,6 +233,12 @@ let debtsLoans: DebtLoan[] = [
 
 let categories: Category[] = [...defaultCategories];
 
+let persons: Person[] = [
+  { id: 'person-1', name: 'Alex Johnson', phone: '+1-555-0101', email: 'alex@example.com' },
+  { id: 'person-2', name: 'Credit Card Company', phone: '+1-800-0202' },
+  { id: 'person-3', name: 'Mom', phone: '+1-555-0303' },
+];
+
 export const mockFinanceService: FinanceService = {
   async getAccounts() {
     await delay(400);
@@ -236,16 +256,23 @@ export const mockFinanceService: FinanceService = {
     await delay(400);
     const newAcc: BankAccount = {
       bankName: draft.bankName,
+      branch: draft.branch,
       accountType: draft.accountType,
       accountNumberMasked: `****${draft.accountNumberLast4.slice(-4)}`,
       currency: draft.currency,
       balance: draft.balance,
+      notes: draft.notes,
+      otpEmailEnabled: false,
+      otpMobileEnabled: false,
       cards: [],
       credentials: {
         encryptedPassword: '[NOT SET]',
         encryptedPin: '[NOT SET]',
         lastVerified: today(),
       },
+      balanceHistory: draft.balance !== 0
+        ? [{ id: `bal-${Date.now()}`, date: today(), amount: draft.balance, note: 'Opening balance', createdAt: today() }]
+        : [],
       id: `acc-${Date.now()}`,
       order: bankAccounts.length,
       createdAt: today(),
@@ -283,6 +310,39 @@ export const mockFinanceService: FinanceService = {
       updatedAt: today(),
     };
     return { ...bankAccounts[idx] };
+  },
+
+  async addBalanceEntry(id: string, entry: { date: string; amount: number; note: string }) {
+    await delay(350);
+    const idx = bankAccounts.findIndex(a => a.id === id);
+    if (idx === -1) throw new Error('Account not found');
+    const newEntry = { id: `bal-${Date.now()}`, ...entry, createdAt: today() };
+    bankAccounts[idx] = {
+      ...bankAccounts[idx],
+      balance: bankAccounts[idx].balance + entry.amount,
+      balanceHistory: [...bankAccounts[idx].balanceHistory, newEntry],
+      updatedAt: today(),
+    };
+    return { ...bankAccounts[idx] };
+  },
+
+  async getBalanceHistoryByMonth(id: string, month: string) {
+    await delay(250);
+    const acc = bankAccounts.find(a => a.id === id);
+    if (!acc) throw new Error('Account not found');
+    return acc.balanceHistory.filter(b => b.date.startsWith(month)).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  },
+
+  async getPersons() {
+    await delay(200);
+    return [...persons];
+  },
+
+  async createPerson(draft: PersonDraft) {
+    await delay(250);
+    const newPerson: Person = { id: `person-${Date.now()}`, ...draft };
+    persons.push(newPerson);
+    return newPerson;
   },
 
   async addCard(accountId: string, draft: BankCardDraft) {

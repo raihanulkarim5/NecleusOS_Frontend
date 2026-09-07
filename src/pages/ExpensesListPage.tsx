@@ -2,26 +2,15 @@ import { FormEvent, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   useExpensesByMonth, useCreateExpense, useUpdateExpense, useDeleteExpense,
-  useCategories, useBankAccounts,
+  useCategories, useCreateCategory, useBankAccounts,
 } from '../hooks/useFinance';
-import type { Expense, ExpenseDraft, ExpenseUpdate, PaymentMethod } from '../types/finance';
-
-const CATEGORY_NAMES: Record<string, string> = {
-  'cat-food': 'Food & Dining',
-  'cat-transport': 'Transport',
-  'cat-utilities': 'Utilities',
-  'cat-entertainment': 'Entertainment',
-  'cat-health': 'Health & Medical',
-  'cat-shopping': 'Shopping',
-  'cat-other': 'Other',
-};
+import type { Category, Expense, ExpenseDraft, ExpenseUpdate, PaymentMethod } from '../types/finance';
 
 interface ExpensesListPageProps {
   month: string;
-  onMonthChange: (month: string) => void;
 }
 
-export function ExpensesListPage({ month, onMonthChange }: ExpensesListPageProps) {
+export function ExpensesListPage({ month }: ExpensesListPageProps) {
   const { data: expenses } = useExpensesByMonth(month);
   const { data: categories } = useCategories();
   const { data: accounts } = useBankAccounts();
@@ -33,6 +22,8 @@ export function ExpensesListPage({ month, onMonthChange }: ExpensesListPageProps
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
+
+  const categoryName = (id: string) => categories?.find((c) => c.id === id)?.name ?? id;
 
   const filtered = useMemo(() => {
     let list = expenses ?? [];
@@ -54,7 +45,6 @@ export function ExpensesListPage({ month, onMonthChange }: ExpensesListPageProps
   return (
     <div>
       <div className="expenses-header">
-        <input type="month" value={month} onChange={(e) => onMonthChange(e.target.value)} className="month-input" />
         <button className="expenses-add-btn" onClick={() => setShowAddModal(true)}>+ Add expense</button>
       </div>
 
@@ -62,7 +52,7 @@ export function ExpensesListPage({ month, onMonthChange }: ExpensesListPageProps
         <input type="text" placeholder="Search notes…" value={search} onChange={(e) => setSearch(e.target.value)} />
         <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
           <option value="All">All categories</option>
-          {Object.entries(CATEGORY_NAMES).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+          {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'date' | 'amount')}>
           <option value="date">Sort: Newest first</option>
@@ -78,18 +68,18 @@ export function ExpensesListPage({ month, onMonthChange }: ExpensesListPageProps
       {filtered.length > 0 ? (
         <div className="expenses-list">
           {filtered.map((exp) => (
-            <div key={exp.id} className="expense-item" onClick={() => setEditingExpense(exp)}>
+            <div key={exp.id} className="expense-item">
               <div className="expense-info">
-                <div className="expense-category">{CATEGORY_NAMES[exp.categoryId] ?? exp.categoryId}</div>
+                <div className="expense-category">{categoryName(exp.categoryId)}</div>
                 <div className="expense-note">{exp.note || '—'}</div>
               </div>
               <div className="expense-amount">${exp.amount.toFixed(2)}</div>
               <div className="expense-date">{exp.date}</div>
               <div className="expense-method">{exp.paymentMethod}</div>
-              <button
-                className="entry-delete expense-delete-btn"
-                onClick={(e) => { e.stopPropagation(); deleteExpense.mutate(exp.id); }}
-              >🗑️</button>
+              <div className="expense-row-actions">
+                <button className="icon-btn" onClick={() => setEditingExpense(exp)}>✏️</button>
+                <button className="icon-btn delete" onClick={() => deleteExpense.mutate(exp.id)}>🗑️</button>
+              </div>
             </div>
           ))}
         </div>
@@ -137,22 +127,41 @@ function ExpenseFormModal({
 }: {
   title: string;
   initial?: Expense;
-  categories: any[] | undefined;
+  categories: Category[] | undefined;
   accounts: any[] | undefined;
   onClose: () => void;
   onSave: (payload: ExpenseDraft | ExpenseUpdate) => void;
 }) {
+  const createCategory = useCreateCategory();
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(initial?.date ?? today);
   const [amount, setAmount] = useState(initial ? String(initial.amount) : '');
-  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? 'cat-food');
+  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? categories?.[0]?.id ?? '');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initial?.paymentMethod ?? 'Card');
   const [accountId, setAccountId] = useState<string | null>(initial?.bankAccountId ?? (accounts?.[0]?.id ?? null));
   const [note, setNote] = useState(initial?.note ?? '');
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+
+  function handleCategoryChange(value: string) {
+    if (value === '__add_new__') {
+      setAddingCategory(true);
+    } else {
+      setCategoryId(value);
+    }
+  }
+
+  function handleConfirmNewCategory() {
+    if (!newCategoryName.trim()) return;
+    createCategory.mutate(
+      { name: newCategoryName.trim(), colorHex: '#8b5cf6' },
+      { onSuccess: (newCat) => { setCategoryId(newCat.id); setAddingCategory(false); setNewCategoryName(''); } },
+    );
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!amount.trim() || parseFloat(amount) <= 0) return;
+    if (!amount.trim() || parseFloat(amount) <= 0 || !categoryId) return;
 
     onSave({
       amount: parseFloat(amount),
@@ -183,9 +192,23 @@ function ExpenseFormModal({
           <div className="expenses-modal-row">
             <div className="field">
               <label>Category</label>
-              <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                {Object.entries(CATEGORY_NAMES).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+              <select value={addingCategory ? '__add_new__' : categoryId} onChange={(e) => handleCategoryChange(e.target.value)}>
+                {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                <option value="__add_new__">+ Add new category…</option>
               </select>
+              {addingCategory && (
+                <div className="inline-add-row">
+                  <input
+                    type="text"
+                    placeholder="Category name"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    autoFocus
+                  />
+                  <button type="button" className="inline-add-confirm" onClick={handleConfirmNewCategory}>Add</button>
+                  <button type="button" className="inline-add-cancel" onClick={() => setAddingCategory(false)}>Cancel</button>
+                </div>
+              )}
             </div>
             <div className="field">
               <label>Payment Method</label>

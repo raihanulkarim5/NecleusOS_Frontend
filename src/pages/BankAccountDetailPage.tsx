@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   useBankAccount, useUpdateBankAccount, useDeleteBankAccount, useUpdateAccountCredentials,
-  useAddCard, useUpdateCard, useDeleteCard,
+  useAddCard, useUpdateCard, useDeleteCard, useAddBalanceEntry, useBalanceHistoryByMonth,
 } from '../hooks/useFinance';
 import type { AccountType, BankCard, BankCardDraft } from '../types/finance';
 
@@ -53,16 +53,20 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [bankName, setBankName] = useState('');
+  const [branch, setBranch] = useState('');
   const [accountType, setAccountType] = useState<AccountType>('Checking');
   const [currency, setCurrency] = useState('USD');
   const [balance, setBalance] = useState('');
+  const [notes, setNotes] = useState('');
 
   useEffect(() => {
     if (account && !editing) {
       setBankName(account.bankName);
+      setBranch(account.branch);
       setAccountType(account.accountType);
       setCurrency(account.currency);
       setBalance(String(account.balance));
+      setNotes(account.notes);
     }
   }, [account?.id, editing]);
 
@@ -81,9 +85,11 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
       id: account!.id,
       updates: {
         bankName: bankName.trim(),
+        branch: branch.trim(),
         accountType,
         currency: currency.trim() || 'USD',
         balance: parseFloat(balance) || 0,
+        notes: notes.trim(),
       },
     });
     setEditing(false);
@@ -118,14 +124,17 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
           <h1 className="page-title">{account.bankName}</h1>
           <div className="account-detail-meta">
             <span className="entry-type-badge">{account.accountType}</span>
-            <span className="account-number">{account.accountNumberMasked}</span>
+            <span className="account-number">{account.accountNumberMasked} · {account.branch || 'No branch set'}</span>
             <span className="account-balance-large">${account.balance.toFixed(2)} {account.currency}</span>
           </div>
         </>
       ) : (
         <form onSubmit={handleSaveEdit} className="edit-form">
           <h2 className="modal-title">Edit account</h2>
-          <div className="field"><label>Bank Name</label><input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} required /></div>
+          <div className="edit-form-row">
+            <div className="field"><label>Bank Name</label><input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} required /></div>
+            <div className="field"><label>Branch</label><input type="text" value={branch} onChange={(e) => setBranch(e.target.value)} /></div>
+          </div>
           <div className="edit-form-row">
             <div className="field">
               <label>Account Type</label>
@@ -138,6 +147,7 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
             <div className="field"><label>Currency</label><input type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} /></div>
             <div className="field"><label>Balance</label><input type="number" step="0.01" value={balance} onChange={(e) => setBalance(e.target.value)} /></div>
           </div>
+          <div className="field"><label>Other Info</label><input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g., joint account, linked to business" /></div>
           <div className="edit-form-actions">
             <button type="button" className="modal-cancel" onClick={() => setEditing(false)}>Cancel</button>
             <button type="submit" className="modal-submit">Save changes</button>
@@ -149,11 +159,7 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
         {SUB_TABS.map((tab) => {
           const Icon = tab.icon;
           return (
-            <button
-              key={tab.key}
-              className={`sub-tab${subTab === tab.key ? ' active' : ''}`}
-              onClick={() => setSubTab(tab.key)}
-            >
+            <button key={tab.key} className={`sub-tab${subTab === tab.key ? ' active' : ''}`} onClick={() => setSubTab(tab.key)}>
               <span className="sub-tab-icon"><Icon /></span>
               {tab.label}
             </button>
@@ -161,26 +167,121 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
         })}
       </div>
 
-      {subTab === 'overview' && (
-        <div className="detail-panel">
-          <div className="detail-row"><div className="detail-label">Account Number</div><div className="detail-value">{account.accountNumberMasked}</div></div>
-          <div className="detail-row"><div className="detail-label">Type</div><div className="detail-value">{account.accountType}</div></div>
-          <div className="detail-row"><div className="detail-label">Currency</div><div className="detail-value">{account.currency}</div></div>
-          <div className="detail-row"><div className="detail-label">Balance</div><div className="detail-value">${account.balance.toFixed(2)}</div></div>
-          <div className="detail-row"><div className="detail-label">Cards on file</div><div className="detail-value">{account.cards.length}</div></div>
-          <div className="detail-row"><div className="detail-label">Credentials last verified</div><div className="detail-value">{account.credentials.lastVerified}</div></div>
-        </div>
-      )}
-
-      {subTab === 'security' && <SecurityTab accountId={account.id} lastVerified={account.credentials.lastVerified} />}
-
+      {subTab === 'overview' && <OverviewTab accountId={account.id} notes={account.notes} branch={account.branch} />}
+      {subTab === 'security' && <SecurityTab accountId={account.id} lastVerified={account.credentials.lastVerified} otpEmailEnabled={account.otpEmailEnabled} otpMobileEnabled={account.otpMobileEnabled} />}
       {subTab === 'cards' && <CardsTab accountId={account.id} cards={account.cards} />}
     </div>
   );
 }
 
-function SecurityTab({ accountId, lastVerified }: { accountId: string; lastVerified: string }) {
+function OverviewTab({ accountId, notes, branch }: { accountId: string; notes: string; branch: string }) {
+  const { data: account } = useBankAccount(accountId);
+  const addBalanceEntry = useAddBalanceEntry();
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const { data: history } = useBalanceHistoryByMonth(accountId, month);
+  const [showTopUp, setShowTopUp] = useState(false);
+
+  if (!account) return null;
+
+  return (
+    <div className="detail-panel">
+      <div className="detail-row"><div className="detail-label">Account Number</div><div className="detail-value">{account.accountNumberMasked}</div></div>
+      <div className="detail-row"><div className="detail-label">Branch</div><div className="detail-value">{branch || '—'}</div></div>
+      <div className="detail-row"><div className="detail-label">Type</div><div className="detail-value">{account.accountType}</div></div>
+      <div className="detail-row"><div className="detail-label">Currency</div><div className="detail-value">{account.currency}</div></div>
+      <div className="detail-row"><div className="detail-label">Balance</div><div className="detail-value">${account.balance.toFixed(2)}</div></div>
+      <div className="detail-row"><div className="detail-label">Other Info</div><div className="detail-value">{notes || '—'}</div></div>
+      <div className="detail-row"><div className="detail-label">Cards on file</div><div className="detail-value">{account.cards.length}</div></div>
+
+      <div className="balance-history-header">
+        <h4 className="subsection-title">Balance History</h4>
+        <div className="balance-history-controls">
+          <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="month-input" />
+          <button className="balance-topup-btn" onClick={() => setShowTopUp(true)}>+ Add balance</button>
+        </div>
+      </div>
+
+      {history && history.length > 0 ? (
+        <div className="balance-history-list">
+          {history.map((entry) => (
+            <div key={entry.id} className="balance-history-row">
+              <span>{entry.date} — {entry.note || 'Balance entry'}</span>
+              <span className={`balance-history-amount ${entry.amount >= 0 ? 'positive' : 'negative'}`}>
+                {entry.amount >= 0 ? '+' : ''}{entry.amount.toFixed(2)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="muted-text">No balance entries for this month.</p>
+      )}
+
+      {showTopUp && (
+        <TopUpModal
+          onClose={() => setShowTopUp(false)}
+          onSubmit={(entry) => { addBalanceEntry.mutate({ id: accountId, entry }); setShowTopUp(false); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function TopUpModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (entry: { date: string; amount: number; note: string }) => void }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(today);
+  const [direction, setDirection] = useState<'deposit' | 'withdrawal'>('deposit');
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const value = parseFloat(amount);
+    if (!value || value <= 0) return;
+    onSubmit({ date, amount: direction === 'deposit' ? value : -value, note: note.trim() });
+  }
+
+  return createPortal(
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal finance-modal" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">Add balance entry</h2>
+        <form onSubmit={handleSubmit} className="finance-modal-form">
+          <div className="finance-modal-row">
+            <div className="field">
+              <label>Type</label>
+              <select value={direction} onChange={(e) => setDirection(e.target.value as 'deposit' | 'withdrawal')}>
+                <option value="deposit">Deposit (+)</option>
+                <option value="withdrawal">Withdrawal (-)</option>
+              </select>
+            </div>
+            <div className="field">
+              <label>Date</label>
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+            </div>
+          </div>
+          <div className="field">
+            <label>Amount</label>
+            <input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} step="0.01" required autoFocus />
+          </div>
+          <div className="field">
+            <label>Note (optional)</label>
+            <input type="text" placeholder="e.g., Salary, ATM withdrawal" value={note} onChange={(e) => setNote(e.target.value)} />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="modal-cancel" onClick={onClose}>Cancel</button>
+            <button type="submit" className="modal-submit">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function SecurityTab({
+  accountId, lastVerified, otpEmailEnabled, otpMobileEnabled,
+}: { accountId: string; lastVerified: string; otpEmailEnabled: boolean; otpMobileEnabled: boolean }) {
   const updateCredentials = useUpdateAccountCredentials();
+  const updateAccount = useUpdateBankAccount();
   const [showForm, setShowForm] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -245,6 +346,23 @@ function SecurityTab({ accountId, lastVerified }: { accountId: string; lastVerif
         </form>
       )}
 
+      <div className="otp-notice">
+        <span>🛡️</span>
+        <div>
+          <div><strong>Two-factor OTP (coming soon)</strong> — once enabled, unlocking this account's credentials or cards will require a one-time code sent to your chosen channel(s).</div>
+          <div className="otp-toggle-row">
+            <label>
+              <input type="checkbox" checked={otpEmailEnabled} onChange={(e) => updateAccount.mutate({ id: accountId, updates: { otpEmailEnabled: e.target.checked } })} />
+              Email OTP
+            </label>
+            <label>
+              <input type="checkbox" checked={otpMobileEnabled} onChange={(e) => updateAccount.mutate({ id: accountId, updates: { otpMobileEnabled: e.target.checked } })} />
+              Mobile OTP
+            </label>
+          </div>
+        </div>
+      </div>
+
       <p className="security-note-small">Passwords and PINs are encrypted and never displayed once saved.</p>
     </div>
   );
@@ -292,10 +410,7 @@ function CardsTab({ accountId, cards }: { accountId: string; cards: BankCard[] }
       {showAddModal && (
         <AddCardModal
           onClose={() => setShowAddModal(false)}
-          onSubmit={(draft) => {
-            addCard.mutate({ accountId, draft });
-            setShowAddModal(false);
-          }}
+          onSubmit={(draft) => { addCard.mutate({ accountId, draft }); setShowAddModal(false); }}
         />
       )}
     </div>
@@ -308,6 +423,7 @@ function AddCardModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (d
   const [expiryMonth, setExpiryMonth] = useState('01');
   const [expiryYear, setExpiryYear] = useState(String(new Date().getFullYear() + 3));
   const [cvv, setCvv] = useState('');
+  const [cardPin, setCardPin] = useState('');
   const [isDefault, setIsDefault] = useState(false);
 
   function handleSubmit(e: FormEvent) {
@@ -351,15 +467,21 @@ function AddCardModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (d
               </select>
             </div>
           </div>
-          <div className="field">
-            <label>CVV</label>
-            <input type="password" value={cvv} onChange={(e) => setCvv(e.target.value.replace(/\D/g, ''))} maxLength={4} placeholder="•••" required />
+          <div className="finance-modal-row">
+            <div className="field">
+              <label>CVV</label>
+              <input type="password" value={cvv} onChange={(e) => setCvv(e.target.value.replace(/\D/g, ''))} maxLength={4} placeholder="•••" required />
+            </div>
+            <div className="field">
+              <label>Card PIN (optional)</label>
+              <input type="password" inputMode="numeric" value={cardPin} onChange={(e) => setCardPin(e.target.value.replace(/\D/g, ''))} maxLength={6} placeholder="••••" />
+            </div>
           </div>
           <label className="checkbox-field">
             <input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} />
             Set as default card
           </label>
-          <p className="finance-security-hint">🔒 CVV is encrypted and never displayed once saved.</p>
+          <p className="finance-security-hint">🔒 CVV and PIN are encrypted and never displayed once saved.</p>
           <div className="modal-actions">
             <button type="button" className="modal-cancel" onClick={onClose}>Cancel</button>
             <button type="submit" className="modal-submit">Add card</button>

@@ -31,30 +31,49 @@ export interface BankCard {
 export interface BankAccount {
   id: string;
   bankName: string;
+  branch: string;
   accountType: AccountType;
   accountNumberMasked: string;
   currency: string;
   balance: number;
+  notes: string;
+  otpEmailEnabled: boolean;
+  otpMobileEnabled: boolean;
   cards: BankCard[];
   credentials: BankingCredentials;
+  balanceHistory: BalanceEntry[];
   order: number;
   createdAt: string;
   updatedAt: string;
 }
 
+export interface BalanceEntry {
+  id: string;
+  date: string;      // YYYY-MM-DD
+  amount: number;     // positive = deposit, negative = withdrawal
+  note: string;
+  createdAt: string;
+}
+
 export interface BankAccountDraft {
   bankName: string;
+  branch: string;
   accountType: AccountType;
   accountNumberLast4: string;
   currency: string;
   balance: number;
+  notes: string;
 }
 
 export interface BankAccountUpdate {
   bankName?: string;
+  branch?: string;
   accountType?: AccountType;
   currency?: string;
   balance?: number;
+  notes?: string;
+  otpEmailEnabled?: boolean;
+  otpMobileEnabled?: boolean;
 }
 
 export interface CredentialsUpdate {
@@ -187,7 +206,9 @@ export interface DebtLoanUpdate {
 
 // Future Budget Plans — for a specific asset, business, or long-term goal
 // (distinct from monthly category budgets above)
-export type BudgetPlanType = 'Asset' | 'Business' | 'Goal' | 'Other';
+export type BudgetPlanType = string; // free text, e.g. Asset/Business/Goal/Other or user-defined
+
+export const DEFAULT_PLAN_TYPES: BudgetPlanType[] = ['Asset', 'Business', 'Goal', 'Other'];
 
 export interface BudgetPlan {
   id: string;
@@ -219,4 +240,21 @@ export interface BudgetPlanUpdate {
   currentAmount?: number;
   targetDate?: string;
   notes?: string;
+}
+
+// People referenced by Debts/Loans — kept lightweight and reusable
+// across multiple debt/loan records for the same person.
+export interface Person {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+}
+
+export interface PersonDraft {
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
 }

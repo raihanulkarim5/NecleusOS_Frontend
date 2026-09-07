@@ -2,28 +2,19 @@ import { FormEvent, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   useBudgetsByMonth, useCreateBudget, useUpdateBudget, useDeleteBudget, useExpensesByMonth,
+  useCategories, useCreateCategory,
   useBudgetPlans, useCreateBudgetPlan, useUpdateBudgetPlan, useDeleteBudgetPlan,
 } from '../hooks/useFinance';
-import type { Budget, BudgetDraft, BudgetUpdate, BudgetPlan, BudgetPlanDraft, BudgetPlanUpdate, BudgetPlanType } from '../types/finance';
+import type { Budget, BudgetDraft, BudgetUpdate, BudgetPlan, BudgetPlanDraft, BudgetPlanUpdate, Category } from '../types/finance';
+import { DEFAULT_PLAN_TYPES } from '../types/finance';
 
 interface BudgetsPageProps {
   month: string;
-  onMonthChange: (month: string) => void;
 }
-
-const CATEGORIES = [
-  { id: 'cat-food', name: 'Food & Dining' },
-  { id: 'cat-transport', name: 'Transport' },
-  { id: 'cat-utilities', name: 'Utilities' },
-  { id: 'cat-entertainment', name: 'Entertainment' },
-  { id: 'cat-health', name: 'Health & Medical' },
-  { id: 'cat-shopping', name: 'Shopping' },
-  { id: 'cat-other', name: 'Other' },
-];
 
 type BudgetsSubTab = 'monthly' | 'plans';
 
-export function BudgetsPage({ month, onMonthChange }: BudgetsPageProps) {
+export function BudgetsPage({ month }: BudgetsPageProps) {
   const [subTab, setSubTab] = useState<BudgetsSubTab>('monthly');
 
   return (
@@ -37,25 +28,29 @@ export function BudgetsPage({ month, onMonthChange }: BudgetsPageProps) {
         </button>
       </div>
 
-      {subTab === 'monthly' && <MonthlyBudgets month={month} onMonthChange={onMonthChange} />}
+      {subTab === 'monthly' && <MonthlyBudgets month={month} />}
       {subTab === 'plans' && <FuturePlans />}
     </div>
   );
 }
 
-function MonthlyBudgets({ month, onMonthChange }: BudgetsPageProps) {
+function MonthlyBudgets({ month }: { month: string }) {
   const { data: budgets } = useBudgetsByMonth(month);
   const { data: expenses } = useExpensesByMonth(month);
+  const { data: categories } = useCategories();
   const createBudget = useCreateBudget();
   const updateBudget = useUpdateBudget();
   const deleteBudget = useDeleteBudget();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
 
+  const categoryName = (id: string) => categories?.find((c) => c.id === id)?.name ?? id;
+  const budgetedCategoryIds = new Set((budgets ?? []).map((b) => b.categoryId));
+  const availableCategories = (categories ?? []).filter((c) => editingBudget ? true : !budgetedCategoryIds.has(c.id));
+
   return (
     <div>
       <div className="budgets-header">
-        <input type="month" value={month} onChange={(e) => onMonthChange(e.target.value)} className="month-input" />
         <button className="budgets-add-btn" onClick={() => setShowAddModal(true)}>+ Set budget</button>
       </div>
 
@@ -65,11 +60,10 @@ function MonthlyBudgets({ month, onMonthChange }: BudgetsPageProps) {
             const spent = expenses?.filter((e) => e.categoryId === bud.categoryId).reduce((sum, e) => sum + e.amount, 0) ?? 0;
             const pct = Math.min((spent / bud.monthlyLimit) * 100, 100);
             const over = spent > bud.monthlyLimit;
-            const catName = CATEGORIES.find((c) => c.id === bud.categoryId)?.name || bud.categoryId;
             return (
               <div key={bud.id} className="budget-item">
                 <div className="budget-header">
-                  <div className="budget-category">{catName}</div>
+                  <div className="budget-category">{categoryName(bud.categoryId)}</div>
                   <div className="budget-item-actions">
                     <div className="budget-limit">${bud.monthlyLimit.toFixed(2)}</div>
                     <button className="icon-btn" onClick={() => setEditingBudget(bud)}>✏️</button>
@@ -97,6 +91,7 @@ function MonthlyBudgets({ month, onMonthChange }: BudgetsPageProps) {
         <BudgetFormModal
           title="Set budget"
           month={month}
+          categories={availableCategories}
           onClose={() => setShowAddModal(false)}
           onSave={(draft) => { createBudget.mutate(draft as BudgetDraft); setShowAddModal(false); }}
         />
@@ -105,6 +100,7 @@ function MonthlyBudgets({ month, onMonthChange }: BudgetsPageProps) {
         <BudgetFormModal
           title="Edit budget"
           month={month}
+          categories={categories}
           initial={editingBudget}
           onClose={() => setEditingBudget(null)}
           onSave={(updates) => { updateBudget.mutate({ id: editingBudget.id, updates: updates as BudgetUpdate }); setEditingBudget(null); }}
@@ -115,16 +111,28 @@ function MonthlyBudgets({ month, onMonthChange }: BudgetsPageProps) {
 }
 
 function BudgetFormModal({
-  title, month, initial, onClose, onSave,
+  title, month, categories, initial, onClose, onSave,
 }: {
-  title: string; month: string; initial?: Budget; onClose: () => void; onSave: (payload: BudgetDraft | BudgetUpdate) => void;
+  title: string; month: string; categories: Category[] | undefined; initial?: Budget;
+  onClose: () => void; onSave: (payload: BudgetDraft | BudgetUpdate) => void;
 }) {
-  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? 'cat-food');
+  const createCategory = useCreateCategory();
+  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? categories?.[0]?.id ?? '');
   const [monthlyLimit, setMonthlyLimit] = useState(initial ? String(initial.monthlyLimit) : '');
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+
+  function handleConfirmNewCategory() {
+    if (!newCategoryName.trim()) return;
+    createCategory.mutate(
+      { name: newCategoryName.trim(), colorHex: '#8b5cf6' },
+      { onSuccess: (newCat) => { setCategoryId(newCat.id); setAddingCategory(false); setNewCategoryName(''); } },
+    );
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!monthlyLimit.trim() || parseFloat(monthlyLimit) <= 0) return;
+    if (!monthlyLimit.trim() || parseFloat(monthlyLimit) <= 0 || !categoryId) return;
     onSave({ categoryId, monthlyLimit: parseFloat(monthlyLimit), month });
   }
 
@@ -135,9 +143,17 @@ function BudgetFormModal({
         <form onSubmit={handleSubmit} className="budgets-modal-form">
           <div className="field">
             <label>Category</label>
-            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-              {CATEGORIES.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            <select value={addingCategory ? '__add_new__' : categoryId} onChange={(e) => e.target.value === '__add_new__' ? setAddingCategory(true) : setCategoryId(e.target.value)}>
+              {categories?.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+              <option value="__add_new__">+ Add new category…</option>
             </select>
+            {addingCategory && (
+              <div className="inline-add-row">
+                <input type="text" placeholder="Category name" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} autoFocus />
+                <button type="button" className="inline-add-confirm" onClick={handleConfirmNewCategory}>Add</button>
+                <button type="button" className="inline-add-cancel" onClick={() => setAddingCategory(false)}>Cancel</button>
+              </div>
+            )}
           </div>
           <div className="field">
             <label>Monthly Limit</label>
@@ -162,6 +178,10 @@ function FuturePlans() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<BudgetPlan | null>(null);
 
+  // Collect existing plan types (defaults + any custom ones already used) for the picker
+  const usedTypes = Array.from(new Set((plans ?? []).map((p) => p.planType)));
+  const allTypes = Array.from(new Set([...DEFAULT_PLAN_TYPES, ...usedTypes]));
+
   return (
     <div>
       <p className="plans-intro">Track savings goals for a specific asset, business investment, or long-term target — separate from your monthly spending budgets.</p>
@@ -176,7 +196,7 @@ function FuturePlans() {
                 <div className="budget-header">
                   <div>
                     <div className="plan-name">{plan.name}</div>
-                    <span className={`plan-type-badge plan-type-${plan.planType.toLowerCase()}`}>{plan.planType}</span>
+                    <span className="plan-type-badge">{plan.planType}</span>
                   </div>
                   <div className="budget-item-actions">
                     <button className="icon-btn" onClick={() => setEditingPlan(plan)}>✏️</button>
@@ -203,6 +223,7 @@ function FuturePlans() {
       {showAddModal && (
         <PlanFormModal
           title="Add plan"
+          allTypes={allTypes}
           onClose={() => setShowAddModal(false)}
           onSave={(draft) => { createPlan.mutate(draft as BudgetPlanDraft); setShowAddModal(false); }}
         />
@@ -210,6 +231,7 @@ function FuturePlans() {
       {editingPlan && (
         <PlanFormModal
           title="Edit plan"
+          allTypes={allTypes}
           initial={editingPlan}
           onClose={() => setEditingPlan(null)}
           onSave={(updates) => { updatePlan.mutate({ id: editingPlan.id, updates: updates as BudgetPlanUpdate }); setEditingPlan(null); }}
@@ -220,16 +242,25 @@ function FuturePlans() {
 }
 
 function PlanFormModal({
-  title, initial, onClose, onSave,
+  title, initial, allTypes, onClose, onSave,
 }: {
-  title: string; initial?: BudgetPlan; onClose: () => void; onSave: (payload: BudgetPlanDraft | BudgetPlanUpdate) => void;
+  title: string; initial?: BudgetPlan; allTypes: string[]; onClose: () => void; onSave: (payload: BudgetPlanDraft | BudgetPlanUpdate) => void;
 }) {
   const [name, setName] = useState(initial?.name ?? '');
-  const [planType, setPlanType] = useState<BudgetPlanType>(initial?.planType ?? 'Asset');
+  const [planType, setPlanType] = useState(initial?.planType ?? allTypes[0] ?? 'Asset');
+  const [addingType, setAddingType] = useState(false);
+  const [newType, setNewType] = useState('');
   const [targetAmount, setTargetAmount] = useState(initial ? String(initial.targetAmount) : '');
   const [currentAmount, setCurrentAmount] = useState(initial ? String(initial.currentAmount) : '0');
   const [targetDate, setTargetDate] = useState(initial?.targetDate ?? '');
   const [notes, setNotes] = useState(initial?.notes ?? '');
+
+  function handleConfirmNewType() {
+    if (!newType.trim()) return;
+    setPlanType(newType.trim());
+    setAddingType(false);
+    setNewType('');
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -256,12 +287,17 @@ function PlanFormModal({
           <div className="budgets-modal-row">
             <div className="field">
               <label>Type</label>
-              <select value={planType} onChange={(e) => setPlanType(e.target.value as BudgetPlanType)}>
-                <option value="Asset">Asset</option>
-                <option value="Business">Business</option>
-                <option value="Goal">Goal</option>
-                <option value="Other">Other</option>
+              <select value={addingType ? '__add_new__' : planType} onChange={(e) => e.target.value === '__add_new__' ? setAddingType(true) : setPlanType(e.target.value)}>
+                {allTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                <option value="__add_new__">+ Add new type…</option>
               </select>
+              {addingType && (
+                <div className="inline-add-row">
+                  <input type="text" placeholder="Type name" value={newType} onChange={(e) => setNewType(e.target.value)} autoFocus />
+                  <button type="button" className="inline-add-confirm" onClick={handleConfirmNewType}>Add</button>
+                  <button type="button" className="inline-add-cancel" onClick={() => setAddingType(false)}>Cancel</button>
+                </div>
+              )}
             </div>
             <div className="field">
               <label>Target Date (optional)</label>
