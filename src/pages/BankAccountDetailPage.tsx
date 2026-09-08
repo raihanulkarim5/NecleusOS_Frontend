@@ -102,12 +102,8 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
       <div className="detail-header">
         <button className="back-button" onClick={onBack}>← Back</button>
         <div className="detail-header-actions">
-          {!editing && (
-            <>
-              <button className="icon-btn" onClick={() => setEditing(true)}>✏️</button>
-              <button className="icon-btn delete" onClick={() => setShowDeleteConfirm(true)}>🗑️</button>
-            </>
-          )}
+          <button className="icon-btn" onClick={() => setEditing(true)}>✏️</button>
+          <button className="icon-btn delete" onClick={() => setShowDeleteConfirm(true)}>🗑️</button>
         </div>
       </div>
 
@@ -121,40 +117,24 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
         </div>
       )}
 
-      {!editing ? (
-        <>
-          <h1 className="page-title">{account.bankName}</h1>
-          <div className="account-detail-meta">
-            <span className="entry-type-badge">{account.accountType}</span>
-            <span className="account-number">{account.accountNumberMasked} · {account.branch || 'No branch set'}</span>
-            <span className="account-balance-large">{formatMoney(account.balance, account.currency)}</span>
-          </div>
-        </>
-      ) : (
-        <form onSubmit={handleSaveEdit} className="edit-form">
-          <h2 className="modal-title">Edit account</h2>
-          <div className="edit-form-row">
-            <div className="field"><label>Bank Name</label><input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} required /></div>
-            <div className="field"><label>Branch</label><input type="text" value={branch} onChange={(e) => setBranch(e.target.value)} /></div>
-          </div>
-          <div className="edit-form-row">
-            <div className="field">
-              <label>Account Type</label>
-              <select value={accountType} onChange={(e) => setAccountType(e.target.value as AccountType)}>
-                <option value="Checking">Checking</option>
-                <option value="Savings">Savings</option>
-                <option value="Credit">Credit</option>
-              </select>
-            </div>
-            <div className="field"><label>Currency</label><input type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} /></div>
-            <div className="field"><label>Balance</label><input type="number" step="0.01" value={balance} onChange={(e) => setBalance(e.target.value)} /></div>
-          </div>
-          <div className="field"><label>Other Info</label><input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g., joint account, linked to business" /></div>
-          <div className="edit-form-actions">
-            <button type="button" className="modal-cancel" onClick={() => setEditing(false)}>Cancel</button>
-            <button type="submit" className="modal-submit">Save changes</button>
-          </div>
-        </form>
+      <h1 className="page-title">{account.bankName}</h1>
+      <div className="account-detail-meta">
+        <span className="entry-type-badge">{account.accountType}</span>
+        <span className="account-number">{account.accountNumberMasked} · {account.branch || 'No branch set'}</span>
+        <span className="account-balance-large">{formatMoney(account.balance, account.currency)}</span>
+      </div>
+
+      {editing && (
+        <EditAccountModal
+          bankName={bankName} setBankName={setBankName}
+          branch={branch} setBranch={setBranch}
+          accountType={accountType} setAccountType={setAccountType}
+          currency={currency} setCurrency={setCurrency}
+          balance={balance} setBalance={setBalance}
+          notes={notes} setNotes={setNotes}
+          onClose={() => setEditing(false)}
+          onSubmit={handleSaveEdit}
+        />
       )}
 
       <div className="sub-tabs">
@@ -173,6 +153,66 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
       {subTab === 'security' && <SecurityTab accountId={account.id} lastVerified={account.credentials.lastVerified} otpEmailEnabled={account.otpEmailEnabled} otpMobileEnabled={account.otpMobileEnabled} />}
       {subTab === 'cards' && <CardsTab accountId={account.id} cards={account.cards} />}
     </div>
+  );
+}
+
+function EditAccountModal({
+  bankName, setBankName, branch, setBranch, accountType, setAccountType,
+  currency, setCurrency, balance, setBalance, notes, setNotes, onClose, onSubmit,
+}: {
+  bankName: string; setBankName: (v: string) => void;
+  branch: string; setBranch: (v: string) => void;
+  accountType: AccountType; setAccountType: (v: AccountType) => void;
+  currency: string; setCurrency: (v: string) => void;
+  balance: string; setBalance: (v: string) => void;
+  notes: string; setNotes: (v: string) => void;
+  onClose: () => void;
+  onSubmit: (e: FormEvent) => void;
+}) {
+  return createPortal(
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal finance-modal wide" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">Edit account</h2>
+        <form onSubmit={onSubmit} className="finance-modal-form horizontal">
+          <div className="field">
+            <label>Bank Name</label>
+            <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} required autoFocus />
+          </div>
+          <div className="field">
+            <label>Branch</label>
+            <input type="text" value={branch} onChange={(e) => setBranch(e.target.value)} />
+          </div>
+
+          <div className="field">
+            <label>Account Type</label>
+            <select value={accountType} onChange={(e) => setAccountType(e.target.value as AccountType)}>
+              <option value="Checking">Checking</option>
+              <option value="Savings">Savings</option>
+              <option value="Credit">Credit</option>
+            </select>
+          </div>
+          <div className="field">
+            <label>Currency</label>
+            <input type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} />
+          </div>
+
+          <div className="field">
+            <label>Balance</label>
+            <input type="number" step="0.01" value={balance} onChange={(e) => setBalance(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Other Info</label>
+            <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g., joint account, linked to business" />
+          </div>
+
+          <div className="modal-actions field-full">
+            <button type="button" className="modal-cancel" onClick={onClose}>Cancel</button>
+            <button type="submit" className="modal-submit">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -520,9 +560,9 @@ function AddCardModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (d
 
   return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal finance-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal finance-modal wide" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-title">Add card</h2>
-        <form onSubmit={handleSubmit} className="finance-modal-form">
+        <form onSubmit={handleSubmit} className="finance-modal-form horizontal">
           <div className="field">
             <label>Card Number (last 4 digits)</label>
             <input type="text" value={cardNumber} onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, ''))} maxLength={4} placeholder="4432" required autoFocus />
@@ -531,36 +571,35 @@ function AddCardModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (d
             <label>Cardholder Name</label>
             <input type="text" value={cardholderName} onChange={(e) => setCardholderName(e.target.value)} placeholder="As printed on card" required />
           </div>
-          <div className="finance-modal-row">
-            <div className="field">
-              <label>Expiry Month</label>
-              <select value={expiryMonth} onChange={(e) => setExpiryMonth(e.target.value)}>
-                {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map((m) => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-            <div className="field">
-              <label>Expiry Year</label>
-              <select value={expiryYear} onChange={(e) => setExpiryYear(e.target.value)}>
-                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map((y) => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </div>
+
+          <div className="field">
+            <label>Expiry Month</label>
+            <select value={expiryMonth} onChange={(e) => setExpiryMonth(e.target.value)}>
+              {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
           </div>
-          <div className="finance-modal-row">
-            <div className="field">
-              <label>CVV</label>
-              <input type="password" value={cvv} onChange={(e) => setCvv(e.target.value.replace(/\D/g, ''))} maxLength={4} placeholder="•••" required />
-            </div>
-            <div className="field">
-              <label>Card PIN (optional)</label>
-              <input type="password" inputMode="numeric" value={cardPin} onChange={(e) => setCardPin(e.target.value.replace(/\D/g, ''))} maxLength={6} placeholder="••••" />
-            </div>
+          <div className="field">
+            <label>Expiry Year</label>
+            <select value={expiryYear} onChange={(e) => setExpiryYear(e.target.value)}>
+              {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map((y) => <option key={y} value={y}>{y}</option>)}
+            </select>
           </div>
-          <label className="checkbox-field">
+
+          <div className="field">
+            <label>CVV</label>
+            <input type="password" value={cvv} onChange={(e) => setCvv(e.target.value.replace(/\D/g, ''))} maxLength={4} placeholder="•••" required />
+          </div>
+          <div className="field">
+            <label>Card PIN (optional)</label>
+            <input type="password" inputMode="numeric" value={cardPin} onChange={(e) => setCardPin(e.target.value.replace(/\D/g, ''))} maxLength={6} placeholder="••••" />
+          </div>
+
+          <label className="checkbox-field field-full">
             <input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} />
             Set as default card
           </label>
-          <p className="finance-security-hint">🔒 CVV and PIN are encrypted and never displayed once saved.</p>
-          <div className="modal-actions">
+          <p className="finance-security-hint field-full">🔒 CVV and PIN are encrypted and never displayed once saved.</p>
+          <div className="modal-actions field-full">
             <button type="button" className="modal-cancel" onClick={onClose}>Cancel</button>
             <button type="submit" className="modal-submit">Add card</button>
           </div>
