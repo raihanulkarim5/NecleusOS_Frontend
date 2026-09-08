@@ -22,6 +22,9 @@ export interface FinanceService {
   updateAccount(id: string, updates: BankAccountUpdate): Promise<BankAccount>;
   deleteAccount(id: string): Promise<void>;
   updateAccountCredentials(id: string, updates: CredentialsUpdate): Promise<BankAccount>;
+  /** Simulates the backend decrypting and returning the stored password/PIN after the
+   *  caller has already passed an authentication step (e.g. OTP) on the client. */
+  revealAccountCredentials(id: string): Promise<{ password: string; pin: string }>;
   addBalanceEntry(id: string, entry: { date: string; amount: number; note: string }): Promise<BankAccount>;
   getBalanceHistoryByMonth(id: string, month: string): Promise<BankAccount['balanceHistory']>;
 

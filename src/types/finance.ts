@@ -2,7 +2,11 @@ import type { LinkRef } from './link';
 
 export type PaymentMethod = 'Cash' | 'Card' | 'Bank transfer';
 export type AccountType = 'Checking' | 'Savings' | 'Credit';
-export type DebtType = 'Loan Given' | 'Loan Received' | 'Debt';
+// Only two directions matter: money I lent out (they owe me), or money I
+// owe (whether it's a loan I took or an ordinary debt like a credit card) —
+// "Loan Received" and "Debt" were the same thing from my side, so they're
+// merged into a single "Debt" type.
+export type DebtType = 'Loan Given' | 'Debt';
 
 export interface Category {
   id: string;

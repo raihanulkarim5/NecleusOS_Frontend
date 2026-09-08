@@ -5,6 +5,7 @@ import {
   useCategories, useCreateCategory, useBankAccounts,
 } from '../hooks/useFinance';
 import type { Category, Expense, ExpenseDraft, ExpenseUpdate, PaymentMethod } from '../types/finance';
+import { formatMoney } from '../utils/money';
 
 interface ExpensesListPageProps {
   month: string;
@@ -62,7 +63,7 @@ export function ExpensesListPage({ month }: ExpensesListPageProps) {
 
       <div className="expenses-total">
         <span>Total ({filtered.length} expense{filtered.length !== 1 ? 's' : ''}):</span>
-        <strong>${totalExpense.toFixed(2)}</strong>
+        <strong>{formatMoney(totalExpense)}</strong>
       </div>
 
       {filtered.length > 0 ? (
@@ -73,7 +74,7 @@ export function ExpensesListPage({ month }: ExpensesListPageProps) {
                 <div className="expense-category">{categoryName(exp.categoryId)}</div>
                 <div className="expense-note">{exp.note || '—'}</div>
               </div>
-              <div className="expense-amount">${exp.amount.toFixed(2)}</div>
+              <div className="expense-amount">{formatMoney(exp.amount)}</div>
               <div className="expense-date">{exp.date}</div>
               <div className="expense-method">{exp.paymentMethod}</div>
               <div className="expense-row-actions">

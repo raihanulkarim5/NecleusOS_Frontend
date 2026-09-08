@@ -27,7 +27,7 @@ let bankAccounts: BankAccount[] = [
     branch: 'Gulshan Branch',
     accountType: 'Checking',
     accountNumberMasked: '****2891',
-    currency: 'USD',
+    currency: 'BDT',
     balance: 5420.75,
     notes: 'Primary checking account',
     otpEmailEnabled: true,
@@ -62,7 +62,7 @@ let bankAccounts: BankAccount[] = [
     branch: 'Dhanmondi Branch',
     accountType: 'Savings',
     accountNumberMasked: '****7654',
-    currency: 'USD',
+    currency: 'BDT',
     balance: 25800.00,
     notes: 'Long-term savings',
     otpEmailEnabled: true,
@@ -195,7 +195,7 @@ let debtsLoans: DebtLoan[] = [
   },
   {
     id: 'debt-3',
-    type: 'Loan Received',
+    type: 'Debt',
     amount: 2000.00,
     personName: 'Mom',
     personPhone: '+1-555-0303',
@@ -238,6 +238,15 @@ let persons: Person[] = [
   { id: 'person-2', name: 'Credit Card Company', phone: '+1-800-0202' },
   { id: 'person-3', name: 'Mom', phone: '+1-555-0303' },
 ];
+
+// Simulates encrypted-at-rest storage. The public BankAccount.credentials
+// fields only ever show "[ENCRYPTED]" / "[NOT SET]" — the real values live
+// here and are only returned by revealAccountCredentials(), which the UI
+// only calls after its own client-side authentication step (OTP).
+const credentialVault: Record<string, { password: string; pin: string }> = {
+  'acc-1': { password: 'SecurePass123', pin: '4821' },
+  'acc-2': { password: 'SavingsKey456', pin: '7390' },
+};
 
 export const mockFinanceService: FinanceService = {
   async getAccounts() {
@@ -294,22 +303,34 @@ export const mockFinanceService: FinanceService = {
   async deleteAccount(id: string) {
     await delay(300);
     bankAccounts = bankAccounts.filter(a => a.id !== id);
+    delete credentialVault[id];
   },
 
   async updateAccountCredentials(id: string, updates: CredentialsUpdate) {
     await delay(400);
     const idx = bankAccounts.findIndex(a => a.id === id);
     if (idx === -1) throw new Error('Account not found');
+    // The real value is what gets "encrypted and stored" (here: kept in the vault) so
+    // it can be retrieved later if forgotten. The account record itself never carries
+    // the plaintext — only a placeholder confirming something is on file.
+    credentialVault[id] = { password: updates.newPassword, pin: updates.newPin };
     bankAccounts[idx] = {
       ...bankAccounts[idx],
       credentials: {
-        encryptedPassword: '[ENCRYPTED]', // never store/echo plaintext, even in mock
+        encryptedPassword: '[ENCRYPTED]',
         encryptedPin: '[ENCRYPTED]',
         lastVerified: today(),
       },
       updatedAt: today(),
     };
     return { ...bankAccounts[idx] };
+  },
+
+  async revealAccountCredentials(id: string) {
+    await delay(400);
+    const stored = credentialVault[id];
+    if (!stored) throw new Error('No password/PIN saved for this account yet.');
+    return { ...stored };
   },
 
   async addBalanceEntry(id: string, entry: { date: string; amount: number; note: string }) {

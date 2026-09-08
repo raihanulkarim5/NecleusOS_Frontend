@@ -4187,8 +4187,9 @@ select optgroup {
 }
 
 .finance-tabs-row .sub-tabs {
-  margin-bottom: 0;
+  margin: 0;
   flex: 1;
+  width: auto;
 }
 
 .finance-tabs-row-filter {
@@ -4827,3 +4828,45 @@ select optgroup {
 
 .balance-history-amount.positive { color: #6fcf7c; }
 .balance-history-amount.negative { color: #ff6b9d; }
+
+/* Credential reveal flow */
+.security-actions-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.reveal-form {
+  margin-top: 16px;
+}
+
+.reveal-intro {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.reveal-box {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  display: grid;
+  gap: 10px;
+}
+
+.reveal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.reveal-row strong {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: var(--cyan);
+}

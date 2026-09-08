@@ -71,6 +71,15 @@ export function useUpdateAccountCredentials() {
   });
 }
 
+// Deliberately a mutation, not a query — the revealed password/PIN should
+// never sit in the query cache. It's only ever held in local component
+// state, for as long as the user keeps the reveal panel open.
+export function useRevealAccountCredentials() {
+  return useMutation({
+    mutationFn: (id: string) => financeService.revealAccountCredentials(id),
+  });
+}
+
 export function useAddBalanceEntry() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -6,6 +6,7 @@ import {
   useBudgetPlans, useCreateBudgetPlan, useUpdateBudgetPlan, useDeleteBudgetPlan,
 } from '../hooks/useFinance';
 import type { Budget, BudgetDraft, BudgetUpdate, BudgetPlan, BudgetPlanDraft, BudgetPlanUpdate, Category } from '../types/finance';
+import { formatMoney } from '../utils/money';
 import { DEFAULT_PLAN_TYPES } from '../types/finance';
 
 interface BudgetsPageProps {
@@ -65,7 +66,7 @@ function MonthlyBudgets({ month }: { month: string }) {
                 <div className="budget-header">
                   <div className="budget-category">{categoryName(bud.categoryId)}</div>
                   <div className="budget-item-actions">
-                    <div className="budget-limit">${bud.monthlyLimit.toFixed(2)}</div>
+                    <div className="budget-limit">{formatMoney(bud.monthlyLimit)}</div>
                     <button className="icon-btn" onClick={() => setEditingBudget(bud)}>✏️</button>
                     <button className="icon-btn delete" onClick={() => deleteBudget.mutate(bud.id)}>🗑️</button>
                   </div>
@@ -74,9 +75,9 @@ function MonthlyBudgets({ month }: { month: string }) {
                   <div className={`budget-fill${over ? ' over' : ''}`} style={{ width: `${pct}%` }} />
                 </div>
                 <div className="budget-stats">
-                  <span className="budget-spent">Spent: ${spent.toFixed(2)}</span>
+                  <span className="budget-spent">Spent: {formatMoney(spent)}</span>
                   <span className={`budget-remaining${over ? ' over-text' : ''}`}>
-                    {over ? `Over by $${(spent - bud.monthlyLimit).toFixed(2)}` : `Remaining: $${(bud.monthlyLimit - spent).toFixed(2)}`}
+                    {over ? `Over by ${formatMoney(spent - bud.monthlyLimit)}` : `Remaining: ${formatMoney(bud.monthlyLimit - spent)}`}
                   </span>
                 </div>
               </div>
@@ -207,7 +208,7 @@ function FuturePlans() {
                   <div className="budget-fill" style={{ width: `${pct}%` }} />
                 </div>
                 <div className="budget-stats">
-                  <span className="budget-spent">${plan.currentAmount.toFixed(2)} of ${plan.targetAmount.toFixed(2)}</span>
+                  <span className="budget-spent">{formatMoney(plan.currentAmount)} of {formatMoney(plan.targetAmount)}</span>
                   <span className="budget-remaining">{pct.toFixed(0)}% funded</span>
                 </div>
                 {plan.targetDate && <div className="plan-target-date">Target date: {plan.targetDate}</div>}

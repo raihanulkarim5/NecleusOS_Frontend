@@ -1,7 +1,8 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDebtLoans, useCreateDebtLoan, useUpdateDebtLoan, useDeleteDebtLoan, usePersons, useCreatePerson } from '../hooks/useFinance';
-import type { DebtLoan, DebtLoanDraft, DebtLoanUpdate, DebtType, Person } from '../types/finance';
+import { formatMoney } from '../utils/money';
+import type { DebtLoan, DebtLoanDraft, DebtLoanUpdate, DebtType } from '../types/finance';
 
 type StatusFilter = 'All' | 'Open' | 'Partial' | 'Settled';
 type TypeFilter = 'All' | DebtType;
@@ -17,7 +18,7 @@ export function DebtLoansPage() {
   const [filterType, setFilterType] = useState<TypeFilter>('All');
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('All');
 
-  const persons = useMemo(() => {
+  const personNames = useMemo(() => {
     const unique = new Set<string>();
     debts?.forEach((d) => unique.add(d.personName));
     return Array.from(unique).sort();
@@ -31,9 +32,9 @@ export function DebtLoansPage() {
     return list;
   }, [debts, filterPerson, filterType, filterStatus]);
 
-  const totalDebt = filtered.reduce((sum, d) => sum + d.amountRemaining, 0);
-  const totalGiven = filtered.filter((d) => d.type === 'Loan Given').reduce((sum, d) => sum + d.amountRemaining, 0);
-  const totalReceived = filtered.filter((d) => d.type === 'Loan Received').reduce((sum, d) => sum + d.amountRemaining, 0);
+  // "Loan Given" = money others owe me. "Debt" = money I owe others.
+  const youAreOwed = filtered.filter((d) => d.type === 'Loan Given').reduce((sum, d) => sum + d.amountRemaining, 0);
+  const youOwe = filtered.filter((d) => d.type === 'Debt').reduce((sum, d) => sum + d.amountRemaining, 0);
 
   return (
     <div>
@@ -44,13 +45,12 @@ export function DebtLoansPage() {
       <div className="debts-filters">
         <select value={filterPerson} onChange={(e) => setFilterPerson(e.target.value)}>
           <option value="All">All people</option>
-          {persons.map((person) => <option key={person} value={person}>{person}</option>)}
+          {personNames.map((person) => <option key={person} value={person}>{person}</option>)}
         </select>
         <select value={filterType} onChange={(e) => setFilterType(e.target.value as TypeFilter)}>
           <option value="All">All types</option>
-          <option value="Loan Given">Loan Given</option>
-          <option value="Loan Received">Loan Received</option>
-          <option value="Debt">Debt</option>
+          <option value="Loan Given">Loan Given (they owe you)</option>
+          <option value="Debt">Debt (you owe)</option>
         </select>
         <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as StatusFilter)}>
           <option value="All">All statuses</option>
@@ -61,9 +61,8 @@ export function DebtLoansPage() {
       </div>
 
       <div className="debts-summary">
-        <div className="debt-stat"><span>Total Owed:</span><strong>${totalDebt.toFixed(2)}</strong></div>
-        <div className="debt-stat"><span>Loans Given:</span><strong>${totalGiven.toFixed(2)}</strong></div>
-        <div className="debt-stat"><span>Loans Received:</span><strong>${totalReceived.toFixed(2)}</strong></div>
+        <div className="debt-stat"><span>You Are Owed:</span><strong>{formatMoney(youAreOwed)}</strong></div>
+        <div className="debt-stat"><span>You Owe:</span><strong>{formatMoney(youOwe)}</strong></div>
       </div>
 
       {filtered.length > 0 ? (
@@ -79,7 +78,9 @@ export function DebtLoansPage() {
                   </span>
                 </div>
                 <div className="debt-actions">
-                  <span className={`debt-badge debt-${debt.type.replace(' ', '-').toLowerCase()}`}>{debt.type}</span>
+                  <span className={`debt-badge debt-${debt.type.replace(' ', '-').toLowerCase()}`}>
+                    {debt.type === 'Loan Given' ? 'They owe you' : 'You owe'}
+                  </span>
                   {debt.status === 'Settled' ? (
                     <span className="debt-paid-badge">✓ Paid {debt.paidDate}</span>
                   ) : (
@@ -96,9 +97,8 @@ export function DebtLoansPage() {
                 </div>
               </div>
               <div className="debt-details">
-                <div className="detail-row"><span>Amount:</span><strong>${debt.amount.toFixed(2)}</strong></div>
-                <div className="detail-row"><span>Remaining:</span><strong>${debt.amountRemaining.toFixed(2)}</strong></div>
-                {debt.personAddress && <div className="detail-row"><span>Address:</span><span>{debt.personAddress}</span></div>}
+                <div className="detail-row"><span>Amount:</span><strong>{formatMoney(debt.amount)}</strong></div>
+                <div className="detail-row"><span>Remaining:</span><strong>{formatMoney(debt.amountRemaining)}</strong></div>
                 <div className="detail-row"><span>Purpose:</span><span>{debt.purpose}</span></div>
                 <div className="detail-row"><span>Date:</span><span>{debt.date}</span></div>
                 {debt.dueDate && <div className="detail-row"><span>Due:</span><span>{debt.dueDate}</span></div>}
@@ -146,14 +146,10 @@ function DebtLoanFormModal({
 
   const [type, setType] = useState<DebtType>(initial?.type ?? 'Loan Given');
 
-  // Person selection: pick existing person by id, or reveal inline "new person" fields
   const initialPersonId = initial ? persons?.find((p) => p.name === initial.personName)?.id ?? '' : '';
   const [selectedPersonId, setSelectedPersonId] = useState(initialPersonId);
   const [addingPerson, setAddingPerson] = useState(!initial && !persons?.length);
   const [personName, setPersonName] = useState(initial?.personName ?? '');
-  const [personPhone, setPersonPhone] = useState(initial?.personPhone ?? '');
-  const [personEmail, setPersonEmail] = useState(initial?.personEmail ?? '');
-  const [personAddress, setPersonAddress] = useState(initial?.personAddress ?? '');
 
   const [amount, setAmount] = useState(initial ? String(initial.amount) : '');
   const [amountRemaining, setAmountRemaining] = useState(initial ? String(initial.amountRemaining) : '');
@@ -168,17 +164,13 @@ function DebtLoanFormModal({
     if (value === '__add_new__') {
       setAddingPerson(true);
       setSelectedPersonId('');
+      setPersonName('');
       return;
     }
     setAddingPerson(false);
     setSelectedPersonId(value);
     const person = persons?.find((p) => p.id === value);
-    if (person) {
-      setPersonName(person.name);
-      setPersonPhone(person.phone ?? '');
-      setPersonEmail(person.email ?? '');
-      setPersonAddress(person.address ?? '');
-    }
+    if (person) setPersonName(person.name);
   }
 
   function buildPayloadAndSave(finalPersonName: string) {
@@ -186,9 +178,6 @@ function DebtLoanFormModal({
       onSave({
         amount: parseFloat(amount),
         personName: finalPersonName,
-        personPhone: personPhone.trim() || undefined,
-        personEmail: personEmail.trim() || undefined,
-        personAddress: personAddress.trim() || undefined,
         purpose: purpose.trim(),
         dueDate: dueDate || undefined,
         paidDate: paidDate || undefined,
@@ -200,9 +189,6 @@ function DebtLoanFormModal({
       onSave({
         type,
         personName: finalPersonName,
-        personPhone: personPhone.trim() || undefined,
-        personEmail: personEmail.trim() || undefined,
-        personAddress: personAddress.trim() || undefined,
         amount: parseFloat(amount),
         purpose: purpose.trim(),
         date,
@@ -218,16 +204,11 @@ function DebtLoanFormModal({
     e.preventDefault();
     if (!personName.trim() || !amount.trim() || !purpose.trim()) return;
 
-    // If adding a brand-new person, save them to the People list first so
-    // they're available in the picker for next time.
-    if (addingPerson && !initial) {
+    // Brand-new person? Save them to the People list so they show up in
+    // the picker next time, name only — no other info is required.
+    if (addingPerson && !initial && !persons?.some((p) => p.name.toLowerCase() === personName.trim().toLowerCase())) {
       createPerson.mutate(
-        {
-          name: personName.trim(),
-          phone: personPhone.trim() || undefined,
-          email: personEmail.trim() || undefined,
-          address: personAddress.trim() || undefined,
-        },
+        { name: personName.trim() },
         { onSuccess: () => buildPayloadAndSave(personName.trim()) },
       );
     } else {
@@ -243,9 +224,8 @@ function DebtLoanFormModal({
           <div className="field">
             <label>Type</label>
             <select value={type} onChange={(e) => setType(e.target.value as DebtType)} disabled={!!initial}>
-              <option value="Loan Given">Loan Given</option>
-              <option value="Loan Received">Loan Received</option>
-              <option value="Debt">Debt</option>
+              <option value="Loan Given">Loan Given (they owe you)</option>
+              <option value="Debt">Debt (you owe)</option>
             </select>
           </div>
 
@@ -258,45 +238,23 @@ function DebtLoanFormModal({
             </select>
           </div>
 
-          <div className="field field-full">
+          <div className="field">
             <label>Person *</label>
-            <div className="person-picker-row">
-              {!addingPerson ? (
-                <>
-                  <select value={selectedPersonId} onChange={(e) => handlePersonSelect(e.target.value)} disabled={!!initial}>
-                    <option value="" disabled>Select a person…</option>
-                    {persons?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    <option value="__add_new__">+ Add new person…</option>
-                  </select>
-                </>
-              ) : (
-                <button type="button" className="add-person-toggle" onClick={() => { setAddingPerson(false); }}>
-                  ← Choose existing person instead
-                </button>
-              )}
-            </div>
+            {!addingPerson ? (
+              <select value={selectedPersonId} onChange={(e) => handlePersonSelect(e.target.value)} disabled={!!initial} required>
+                <option value="" disabled>Select a person…</option>
+                {persons?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                <option value="__add_new__">+ Add new person…</option>
+              </select>
+            ) : (
+              <div className="person-picker-row">
+                <input type="text" placeholder="Person's name" value={personName} onChange={(e) => setPersonName(e.target.value)} required autoFocus />
+                {!!persons?.length && (
+                  <button type="button" className="add-person-toggle" onClick={() => { setAddingPerson(false); setPersonName(''); }}>← Pick existing</button>
+                )}
+              </div>
+            )}
           </div>
-
-          {addingPerson && (
-            <div className="new-person-fields">
-              <div className="field field-full">
-                <label>Name *</label>
-                <input type="text" placeholder="e.g., John Doe" value={personName} onChange={(e) => setPersonName(e.target.value)} required autoFocus />
-              </div>
-              <div className="field">
-                <label>Phone (optional)</label>
-                <input type="tel" placeholder="+1-555-0000" value={personPhone} onChange={(e) => setPersonPhone(e.target.value)} />
-              </div>
-              <div className="field">
-                <label>Email (optional)</label>
-                <input type="email" placeholder="john@example.com" value={personEmail} onChange={(e) => setPersonEmail(e.target.value)} />
-              </div>
-              <div className="field field-full">
-                <label>Address (optional)</label>
-                <input type="text" placeholder="123 Main St" value={personAddress} onChange={(e) => setPersonAddress(e.target.value)} />
-              </div>
-            </div>
-          )}
 
           <div className="field">
             <label>Amount *</label>
@@ -315,14 +273,14 @@ function DebtLoanFormModal({
             </div>
           )}
 
-          <div className="field field-full">
-            <label>Purpose *</label>
-            <input type="text" placeholder="e.g., Emergency fund" value={purpose} onChange={(e) => setPurpose(e.target.value)} required />
-          </div>
-
           <div className="field">
             <label>Due Date (optional)</label>
             <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
+
+          <div className="field field-full">
+            <label>Purpose *</label>
+            <input type="text" placeholder="e.g., Emergency fund" value={purpose} onChange={(e) => setPurpose(e.target.value)} required />
           </div>
 
           {status === 'Settled' && (
@@ -334,7 +292,7 @@ function DebtLoanFormModal({
 
           <div className="field field-full">
             <label>Notes (optional)</label>
-            <textarea placeholder="Add any additional notes..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+            <input type="text" placeholder="Any additional notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
           <div className="modal-actions field-full">

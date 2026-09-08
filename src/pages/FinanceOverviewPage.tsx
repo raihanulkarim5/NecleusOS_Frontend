@@ -1,4 +1,5 @@
 import { useMonthSummary, useOverallBalance, useBankAccounts } from '../hooks/useFinance';
+import { formatMoney } from '../utils/money';
 
 const CATEGORY_NAMES: Record<string, string> = {
   'cat-food': 'Food & Dining',
@@ -25,7 +26,7 @@ export function FinanceOverviewPage({ month, onManageAccounts }: FinanceOverview
       {/* Overall Balance Card */}
       <div className="finance-card overall-balance">
         <div className="card-label">Overall Balance</div>
-        <div className="card-value">${(overallBalance ?? 0).toFixed(2)}</div>
+        <div className="card-value">{formatMoney(overallBalance ?? 0)}</div>
       </div>
 
       {/* Account Balances */}
@@ -42,8 +43,7 @@ export function FinanceOverviewPage({ month, onManageAccounts }: FinanceOverview
                 <div className="account-type">{account.accountType}</div>
               </div>
               <div className="account-number">{account.accountNumberMasked}</div>
-              <div className="account-balance">${account.balance.toFixed(2)}</div>
-              <div className="account-currency">{account.currency}</div>
+              <div className="account-balance">{formatMoney(account.balance, account.currency)}</div>
             </div>
           ))
         ) : (
@@ -59,7 +59,7 @@ export function FinanceOverviewPage({ month, onManageAccounts }: FinanceOverview
           <h3 className="section-title">Monthly Spending — {month}</h3>
           <div className="summary-stat">
             <span>Total Spent:</span>
-            <strong>${summary.totalSpent.toFixed(2)}</strong>
+            <strong>{formatMoney(summary.totalSpent)}</strong>
           </div>
 
           {summary.byCategory.length > 0 ? (
@@ -69,10 +69,10 @@ export function FinanceOverviewPage({ month, onManageAccounts }: FinanceOverview
                 {summary.byCategory.map((cat) => (
                   <div key={cat.categoryId} className="category-row">
                     <span className="category-label">{CATEGORY_NAMES[cat.categoryId] ?? cat.categoryId}</span>
-                    <span className="category-spent">${cat.spent.toFixed(2)}</span>
+                    <span className="category-spent">{formatMoney(cat.spent)}</span>
                     {cat.budget !== null && (
                       <>
-                        <span className="category-budget">Budget: ${cat.budget.toFixed(2)}</span>
+                        <span className="category-budget">Budget: {formatMoney(cat.budget)}</span>
                         <div className="budget-bar">
                           <div
                             className={`budget-fill${cat.spent > cat.budget ? ' over' : ''}`}

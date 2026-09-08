@@ -3,8 +3,10 @@ import { createPortal } from 'react-dom';
 import {
   useBankAccount, useUpdateBankAccount, useDeleteBankAccount, useUpdateAccountCredentials,
   useAddCard, useUpdateCard, useDeleteCard, useAddBalanceEntry, useBalanceHistoryByMonth,
+  useRevealAccountCredentials,
 } from '../hooks/useFinance';
 import type { AccountType, BankCard, BankCardDraft } from '../types/finance';
+import { formatMoney } from '../utils/money';
 
 type SubTab = 'overview' | 'security' | 'cards';
 
@@ -55,7 +57,7 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
   const [bankName, setBankName] = useState('');
   const [branch, setBranch] = useState('');
   const [accountType, setAccountType] = useState<AccountType>('Checking');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('BDT');
   const [balance, setBalance] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -87,7 +89,7 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
         bankName: bankName.trim(),
         branch: branch.trim(),
         accountType,
-        currency: currency.trim() || 'USD',
+        currency: currency.trim() || 'BDT',
         balance: parseFloat(balance) || 0,
         notes: notes.trim(),
       },
@@ -125,7 +127,7 @@ export function BankAccountDetailPage({ accountId, onBack }: BankAccountDetailPa
           <div className="account-detail-meta">
             <span className="entry-type-badge">{account.accountType}</span>
             <span className="account-number">{account.accountNumberMasked} · {account.branch || 'No branch set'}</span>
-            <span className="account-balance-large">${account.balance.toFixed(2)} {account.currency}</span>
+            <span className="account-balance-large">{formatMoney(account.balance, account.currency)}</span>
           </div>
         </>
       ) : (
@@ -189,7 +191,7 @@ function OverviewTab({ accountId, notes, branch }: { accountId: string; notes: s
       <div className="detail-row"><div className="detail-label">Branch</div><div className="detail-value">{branch || '—'}</div></div>
       <div className="detail-row"><div className="detail-label">Type</div><div className="detail-value">{account.accountType}</div></div>
       <div className="detail-row"><div className="detail-label">Currency</div><div className="detail-value">{account.currency}</div></div>
-      <div className="detail-row"><div className="detail-label">Balance</div><div className="detail-value">${account.balance.toFixed(2)}</div></div>
+      <div className="detail-row"><div className="detail-label">Balance</div><div className="detail-value">{formatMoney(account.balance, account.currency)}</div></div>
       <div className="detail-row"><div className="detail-label">Other Info</div><div className="detail-value">{notes || '—'}</div></div>
       <div className="detail-row"><div className="detail-label">Cards on file</div><div className="detail-value">{account.cards.length}</div></div>
 
@@ -207,7 +209,7 @@ function OverviewTab({ accountId, notes, branch }: { accountId: string; notes: s
             <div key={entry.id} className="balance-history-row">
               <span>{entry.date} — {entry.note || 'Balance entry'}</span>
               <span className={`balance-history-amount ${entry.amount >= 0 ? 'positive' : 'negative'}`}>
-                {entry.amount >= 0 ? '+' : ''}{entry.amount.toFixed(2)}
+                {entry.amount >= 0 ? '+' : ''}{formatMoney(entry.amount, account?.currency)}
               </span>
             </div>
           ))}
@@ -282,6 +284,7 @@ function SecurityTab({
 }: { accountId: string; lastVerified: string; otpEmailEnabled: boolean; otpMobileEnabled: boolean }) {
   const updateCredentials = useUpdateAccountCredentials();
   const updateAccount = useUpdateBankAccount();
+  const revealCredentials = useRevealAccountCredentials();
   const [showForm, setShowForm] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -289,6 +292,11 @@ function SecurityTab({
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  const [viewStep, setViewStep] = useState<'idle' | 'verifying' | 'revealed'>('idle');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verifyError, setVerifyError] = useState('');
+  const [revealed, setRevealed] = useState<{ password: string; pin: string } | null>(null);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -312,6 +320,38 @@ function SecurityTab({
     );
   }
 
+  function handleStartView() {
+    setVerifyError('');
+    setViewStep('verifying');
+  }
+
+  function handleVerifyCode(e: FormEvent) {
+    e.preventDefault();
+    setVerifyError('');
+    if (!/^\d{6}$/.test(verificationCode)) {
+      setVerifyError('Enter the 6-digit code sent to your email/mobile.');
+      return;
+    }
+    // Mock: any well-formed 6-digit code passes. A real backend would
+    // validate it against the code it actually sent before decrypting.
+    revealCredentials.mutate(accountId, {
+      onSuccess: (data) => {
+        setRevealed(data);
+        setViewStep('revealed');
+        setVerificationCode('');
+      },
+      onError: (err: any) => {
+        setVerifyError(err?.message ?? 'Could not retrieve saved credentials.');
+      },
+    });
+  }
+
+  function handleHide() {
+    setRevealed(null);
+    setViewStep('idle');
+    setVerificationCode('');
+  }
+
   return (
     <div className="detail-panel security-panel">
       <div className="security-status">
@@ -324,11 +364,20 @@ function SecurityTab({
 
       {success && <p className="security-success">✓ Credentials updated successfully.</p>}
 
-      {!showForm ? (
-        <button className="modal-submit" style={{ marginTop: 16 }} onClick={() => setShowForm(true)}>
-          Update password & PIN
-        </button>
-      ) : (
+      <div className="security-actions-row">
+        {!showForm && (
+          <button className="modal-submit" onClick={() => setShowForm(true)}>
+            Update password & PIN
+          </button>
+        )}
+        {viewStep === 'idle' && (
+          <button className="balance-topup-btn" onClick={handleStartView}>
+            View saved password & PIN
+          </button>
+        )}
+      </div>
+
+      {showForm && (
         <form onSubmit={handleSubmit} className="security-form">
           {error && <p className="security-error">{error}</p>}
           <div className="edit-form-row">
@@ -346,10 +395,39 @@ function SecurityTab({
         </form>
       )}
 
+      {viewStep === 'verifying' && (
+        <form onSubmit={handleVerifyCode} className="security-form reveal-form">
+          <p className="reveal-intro">
+            To retrieve your saved password and PIN, enter the verification code sent to
+            {otpEmailEnabled && ' your email'}{otpEmailEnabled && otpMobileEnabled && ' and'}{otpMobileEnabled && ' your mobile'}
+            {!otpEmailEnabled && !otpMobileEnabled && ' your registered contact (enable Email/Mobile OTP below first)'}.
+          </p>
+          {verifyError && <p className="security-error">{verifyError}</p>}
+          <div className="edit-form-row">
+            <div className="field">
+              <label>Verification Code</label>
+              <input type="text" inputMode="numeric" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))} maxLength={6} placeholder="6-digit code" autoFocus />
+            </div>
+          </div>
+          <div className="edit-form-actions">
+            <button type="button" className="modal-cancel" onClick={() => setViewStep('idle')}>Cancel</button>
+            <button type="submit" className="modal-submit">Verify & Reveal</button>
+          </div>
+        </form>
+      )}
+
+      {viewStep === 'revealed' && revealed && (
+        <div className="reveal-box">
+          <div className="reveal-row"><span>Password</span><strong>{revealed.password}</strong></div>
+          <div className="reveal-row"><span>PIN</span><strong>{revealed.pin}</strong></div>
+          <button className="modal-cancel" onClick={handleHide}>Hide</button>
+        </div>
+      )}
+
       <div className="otp-notice">
         <span>🛡️</span>
         <div>
-          <div><strong>Two-factor OTP (coming soon)</strong> — once enabled, unlocking this account's credentials or cards will require a one-time code sent to your chosen channel(s).</div>
+          <div><strong>Two-factor OTP (coming soon)</strong> — verification codes above are simulated for now. Once live, retrieving your credentials will require a real one-time code sent to your chosen channel(s).</div>
           <div className="otp-toggle-row">
             <label>
               <input type="checkbox" checked={otpEmailEnabled} onChange={(e) => updateAccount.mutate({ id: accountId, updates: { otpEmailEnabled: e.target.checked } })} />
@@ -363,7 +441,7 @@ function SecurityTab({
         </div>
       </div>
 
-      <p className="security-note-small">Passwords and PINs are encrypted and never displayed once saved.</p>
+      <p className="security-note-small">Passwords and PINs are encrypted at rest. Retrieving them here always requires passing the verification step above.</p>
     </div>
   );
 }

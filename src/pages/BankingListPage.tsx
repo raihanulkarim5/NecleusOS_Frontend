@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useBankAccounts, useCreateBankAccount } from '../hooks/useFinance';
+import { formatMoney } from '../utils/money';
 import type { AccountType, BankAccountDraft } from '../types/finance';
 
 interface BankingListPageProps {
@@ -35,7 +36,7 @@ export function BankingListPage({ onOpenAccount }: BankingListPageProps) {
 
       <div className="finance-card overall-balance" style={{ marginBottom: 20 }}>
         <div className="card-label">Total Across Accounts</div>
-        <div className="card-value">${totalBalance.toFixed(2)}</div>
+        <div className="card-value">{formatMoney(totalBalance)}</div>
       </div>
 
       {filtered.length > 0 ? (
@@ -47,7 +48,7 @@ export function BankingListPage({ onOpenAccount }: BankingListPageProps) {
                 <div className="account-type">{acc.accountType}</div>
               </div>
               <div className="account-number">{acc.accountNumberMasked} · {acc.branch}</div>
-              <div className="account-balance">${acc.balance.toFixed(2)} <span className="account-currency">{acc.currency}</span></div>
+              <div className="account-balance">{formatMoney(acc.balance, acc.currency)}</div>
               <div className="banking-card-footer">
                 <span className="security-note">🔒 {acc.cards.length} card{acc.cards.length !== 1 ? 's' : ''} · 2FA secured</span>
               </div>
@@ -76,7 +77,7 @@ function AddBankAccountModal({ onClose, onSubmit }: { onClose: () => void; onSub
   const [branch, setBranch] = useState('');
   const [accountType, setAccountType] = useState<AccountType>('Checking');
   const [accountNumber, setAccountNumber] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('BDT');
   const [balance, setBalance] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -89,7 +90,7 @@ function AddBankAccountModal({ onClose, onSubmit }: { onClose: () => void; onSub
       branch: branch.trim(),
       accountType,
       accountNumberLast4: accountNumber.trim(),
-      currency: currency.trim() || 'USD',
+      currency: currency.trim() || 'BDT',
       balance: parseFloat(balance) || 0,
       notes: notes.trim(),
     });
@@ -122,7 +123,7 @@ function AddBankAccountModal({ onClose, onSubmit }: { onClose: () => void; onSub
             </div>
             <div className="field">
               <label>Currency</label>
-              <input type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} placeholder="USD" />
+              <input type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} placeholder="BDT" />
             </div>
           </div>
 
