@@ -278,7 +278,7 @@ function DebtLoanFormModal({
             <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
 
-          <div className="field field-full">
+          <div className="field">
             <label>Purpose *</label>
             <input type="text" placeholder="e.g., Emergency fund" value={purpose} onChange={(e) => setPurpose(e.target.value)} required />
           </div>
@@ -290,7 +290,7 @@ function DebtLoanFormModal({
             </div>
           )}
 
-          <div className="field field-full">
+          <div className="field">
             <label>Notes (optional)</label>
             <input type="text" placeholder="Any additional notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
