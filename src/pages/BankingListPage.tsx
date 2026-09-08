@@ -98,56 +98,50 @@ function AddBankAccountModal({ onClose, onSubmit }: { onClose: () => void; onSub
 
   return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal finance-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal finance-modal wide" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-title">Add bank account</h2>
-        <form onSubmit={handleSubmit} className="finance-modal-form">
-          <div className="finance-modal-row">
-            <div className="field">
-              <label>Bank Name</label>
-              <input type="text" placeholder="e.g., First Bank" value={bankName} onChange={(e) => setBankName(e.target.value)} required autoFocus />
-            </div>
-            <div className="field">
-              <label>Branch</label>
-              <input type="text" placeholder="e.g., Gulshan Branch" value={branch} onChange={(e) => setBranch(e.target.value)} />
-            </div>
+        <form onSubmit={handleSubmit} className="finance-modal-form horizontal">
+          <div className="field">
+            <label>Bank Name</label>
+            <input type="text" placeholder="e.g., First Bank" value={bankName} onChange={(e) => setBankName(e.target.value)} required autoFocus />
           </div>
-
-          <div className="finance-modal-row">
-            <div className="field">
-              <label>Account Type</label>
-              <select value={accountType} onChange={(e) => setAccountType(e.target.value as AccountType)}>
-                <option value="Checking">Checking</option>
-                <option value="Savings">Savings</option>
-                <option value="Credit">Credit</option>
-              </select>
-            </div>
-            <div className="field">
-              <label>Currency</label>
-              <input type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} placeholder="BDT" />
-            </div>
-          </div>
-
-          <div className="finance-modal-row">
-            <div className="field">
-              <label>Account Number (last 4 digits)</label>
-              <input type="text" placeholder="e.g., 5678" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))} maxLength={4} required />
-            </div>
-            <div className="field">
-              <label>Opening Balance</label>
-              <input type="number" placeholder="0.00" value={balance} onChange={(e) => setBalance(e.target.value)} step="0.01" />
-            </div>
+          <div className="field">
+            <label>Branch</label>
+            <input type="text" placeholder="e.g., Gulshan Branch" value={branch} onChange={(e) => setBranch(e.target.value)} />
           </div>
 
           <div className="field">
+            <label>Account Type</label>
+            <select value={accountType} onChange={(e) => setAccountType(e.target.value as AccountType)}>
+              <option value="Checking">Checking</option>
+              <option value="Savings">Savings</option>
+              <option value="Credit">Credit</option>
+            </select>
+          </div>
+          <div className="field">
+            <label>Currency</label>
+            <input type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} placeholder="BDT" />
+          </div>
+
+          <div className="field">
+            <label>Account Number (last 4 digits)</label>
+            <input type="text" placeholder="e.g., 5678" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))} maxLength={4} required />
+          </div>
+          <div className="field">
+            <label>Opening Balance</label>
+            <input type="number" placeholder="0.00" value={balance} onChange={(e) => setBalance(e.target.value)} step="0.01" />
+          </div>
+
+          <div className="field field-full">
             <label>Other Info (optional)</label>
             <input type="text" placeholder="e.g., joint account, linked to business" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
-          <p className="finance-security-hint">
+          <p className="finance-security-hint field-full">
             🔒 You'll set up a password and PIN for this account after it's created (two-factor secured).
           </p>
 
-          <div className="modal-actions">
+          <div className="modal-actions field-full">
             <button type="button" className="modal-cancel" onClick={onClose}>Cancel</button>
             <button type="submit" className="modal-submit">Add account</button>
           </div>
