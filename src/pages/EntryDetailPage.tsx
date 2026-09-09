@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useDeleteEntry, useEntry, useUpdateEntry } from '../hooks/useEntries';
 import { RichNotesEditor } from '../components/RichNotesEditor';
 import type { EntryType } from '../types/entry';
@@ -53,20 +54,6 @@ export function EntryDetailPage({ entryId, onBack }: EntryDetailPageProps) {
   const [editing, setEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const [formTitle, setFormTitle] = useState('');
-  const [formType, setFormType] = useState<EntryType>('Note');
-  const [formDescription, setFormDescription] = useState('');
-  const [formTags, setFormTags] = useState('');
-
-  useEffect(() => {
-    if (entry && !editing) {
-      setFormTitle(entry.title);
-      setFormType(entry.type);
-      setFormDescription(entry.description);
-      setFormTags(entry.tags.join(', '));
-    }
-  }, [entry?.id, editing]);
-
   if (isLoading || !entry) {
     return (
       <div>
@@ -76,38 +63,20 @@ export function EntryDetailPage({ entryId, onBack }: EntryDetailPageProps) {
     );
   }
 
-  function handleSaveEdit(e: FormEvent) {
-    e.preventDefault();
-    updateEntry.mutate({
-      id: entry!.id,
-      updates: {
-        title: formTitle.trim(),
-        type: formType,
-        description: formDescription,
-        tags: formTags.split(',').map(t => t.trim()).filter(Boolean),
-      },
-    });
-    setEditing(false);
-  }
-
   return (
     <div>
       <div className="detail-header">
         <button className="back-button" onClick={onBack}>← Back</button>
         <div className="detail-header-actions">
-          {!editing && (
-            <>
-              <button
-                className="icon-btn"
-                title={entry.favorite ? 'Unfavorite' : 'Favorite'}
-                onClick={() => updateEntry.mutate({ id: entry.id, updates: { favorite: !entry.favorite } })}
-              >
-                {entry.favorite ? '⭐' : '☆'}
-              </button>
-              <button className="icon-btn" onClick={() => setEditing(true)}>✏️</button>
-              <button className="icon-btn delete" onClick={() => setShowDeleteConfirm(true)}>🗑️</button>
-            </>
-          )}
+          <button
+            className="icon-btn"
+            title={entry.favorite ? 'Unfavorite' : 'Favorite'}
+            onClick={() => updateEntry.mutate({ id: entry.id, updates: { favorite: !entry.favorite } })}
+          >
+            {entry.favorite ? '⭐' : '☆'}
+          </button>
+          <button className="icon-btn" onClick={() => setEditing(true)}>✏️</button>
+          <button className="icon-btn delete" onClick={() => setShowDeleteConfirm(true)}>🗑️</button>
         </div>
       </div>
 
@@ -121,37 +90,11 @@ export function EntryDetailPage({ entryId, onBack }: EntryDetailPageProps) {
         </div>
       )}
 
-      {!editing ? (
-        <>
-          <h1 className="page-title">{entry.title}</h1>
-          <div className="entry-detail-meta">
-            <span className="entry-type-badge">{TYPE_ICONS[entry.type]} {entry.type}</span>
-            {entry.tags.map(t => <span key={t} className="tag-badge">#{t}</span>)}
-          </div>
-        </>
-      ) : (
-        <form onSubmit={handleSaveEdit} className="edit-form">
-          <h2 className="modal-title">Edit entry</h2>
-          <div className="edit-form-row">
-            <div className="field"><label>Title</label><input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} required autoFocus /></div>
-            <div className="field">
-              <label>Type</label>
-              <select value={formType} onChange={(e) => setFormType(e.target.value as EntryType)}>
-                {TYPES.map(t => <option key={t} value={t}>{TYPE_ICONS[t]} {t}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="field">
-            <label>Description</label>
-            <RichNotesEditor value={formDescription} onSave={setFormDescription} placeholder="Write the full details here…" />
-          </div>
-          <div className="field"><label>Tags</label><input type="text" value={formTags} onChange={(e) => setFormTags(e.target.value)} placeholder="work, urgent, idea" /></div>
-          <div className="edit-form-actions">
-            <button type="button" className="modal-cancel" onClick={() => setEditing(false)}>Cancel</button>
-            <button type="submit" className="modal-submit">Save changes</button>
-          </div>
-        </form>
-      )}
+      <h1 className="page-title">{entry.title}</h1>
+      <div className="entry-detail-meta">
+        <span className="entry-type-badge">{TYPE_ICONS[entry.type]} {entry.type}</span>
+        {entry.tags.map(t => <span key={t} className="tag-badge">#{t}</span>)}
+      </div>
 
       <div className="sub-tabs">
         {SUB_TABS.map((tab) => {
@@ -167,6 +110,9 @@ export function EntryDetailPage({ entryId, onBack }: EntryDetailPageProps) {
 
       {subTab === 'overview' && (
         <div className="detail-panel">
+          {entry.imageUrl && (
+            <div className="entry-detail-image"><img src={entry.imageUrl} alt="" /></div>
+          )}
           {entry.description ? (
             <div className="detail-value rich-content" dangerouslySetInnerHTML={{ __html: entry.description }} />
           ) : (
@@ -184,6 +130,122 @@ export function EntryDetailPage({ entryId, onBack }: EntryDetailPageProps) {
           )}
         </div>
       )}
+
+      {editing && (
+        <EditEntryModal
+          initial={entry}
+          onClose={() => setEditing(false)}
+          onSave={(updates) => { updateEntry.mutate({ id: entry.id, updates }); setEditing(false); }}
+        />
+      )}
     </div>
+  );
+}
+
+function EditEntryModal({
+  initial, onClose, onSave,
+}: {
+  initial: { title: string; type: EntryType; description: string; tags: string[]; imageUrl: string | null };
+  onClose: () => void;
+  onSave: (updates: { title: string; type: EntryType; description: string; tags: string[]; imageUrl: string | null }) => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [title, setTitle] = useState(initial.title);
+  const [type, setType] = useState<EntryType>(initial.type);
+  const [tags, setTags] = useState(initial.tags.join(', '));
+  const [imageUrl, setImageUrl] = useState<string | null>(initial.imageUrl);
+  const [imageError, setImageError] = useState('');
+  const [description, setDescription] = useState(initial.description);
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageError('');
+    if (!file.type.startsWith('image/')) {
+      setImageError('Please choose an image file.');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setImageError('Image is too large (max 4MB).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setImageUrl(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!title.trim()) return;
+    onSave({
+      title: title.trim(),
+      type,
+      description,
+      tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+      imageUrl,
+    });
+  }
+
+  return createPortal(
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal entries-modal wide" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">Edit entry</h2>
+        <form onSubmit={handleSubmit} className="entries-step1-form">
+          <div className="entries-step1-row">
+            <div className="field">
+              <label>Title</label>
+              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus />
+            </div>
+            <div className="field">
+              <label>Tags</label>
+              <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="work, urgent, idea" />
+            </div>
+          </div>
+
+          <div className="field">
+            <label>Type</label>
+            <div className="entry-type-picker">
+              {TYPES.map(t => (
+                <button
+                  type="button"
+                  key={t}
+                  className={`entry-type-chip${type === t ? ' active' : ''}`}
+                  onClick={() => setType(t)}
+                >
+                  {TYPE_ICONS[t]} {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="field">
+            <label>Image (optional)</label>
+            {!imageUrl ? (
+              <button type="button" className="entries-image-upload-btn" onClick={() => fileInputRef.current?.click()}>
+                📷 Add an image
+              </button>
+            ) : (
+              <div className="entries-image-preview">
+                <img src={imageUrl} alt="Preview" />
+                <button type="button" className="entries-image-remove-btn" onClick={() => setImageUrl(null)}>✕ Remove</button>
+              </div>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} hidden />
+            {imageError && <p className="security-error">{imageError}</p>}
+          </div>
+
+          <div className="field">
+            <label>Description</label>
+            <RichNotesEditor value={description} onSave={setDescription} placeholder="Write the full details here…" />
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="modal-cancel" onClick={onClose}>Cancel</button>
+            <button type="submit" className="modal-submit">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body,
   );
 }

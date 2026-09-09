@@ -3596,7 +3596,7 @@ select optgroup {
 }
 
 .entry-card {
-  padding: 14px;
+  padding: 14px 14px 36px 14px;
   border-radius: 10px;
   border: 1px solid var(--card-border);
   background: var(--card);
@@ -3686,7 +3686,7 @@ select optgroup {
 
 .entry-delete {
   position: absolute;
-  top: 10px;
+  bottom: 10px;
   right: 10px;
   background: none;
   border: none;
@@ -5021,3 +5021,94 @@ select optgroup {
 
 .entries-save-later-btn:hover { opacity: 0.8; }
 .entries-save-later-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Entries — Step 1 row (title + tags), image upload/preview */
+.entries-step1-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.entries-image-upload-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px dashed var(--card-border);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: center;
+}
+
+.entries-image-upload-btn:hover {
+  border-color: var(--violet);
+  color: var(--ink);
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.entries-image-preview {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  max-width: 240px;
+}
+
+.entries-image-preview img {
+  display: block;
+  width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+}
+
+.entries-image-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(6, 7, 28, 0.75);
+  color: var(--ink);
+  font-size: 11px;
+  cursor: pointer;
+  outline: none;
+}
+
+.entries-image-remove-btn:hover {
+  background: rgba(255, 107, 157, 0.3);
+}
+
+/* Entry card thumbnail (list view) */
+.entry-card-image {
+  margin: -14px -14px 4px -14px;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+  max-height: 140px;
+}
+
+.entry-card-image img {
+  display: block;
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+/* Entry detail image */
+.entry-detail-image {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  border: 1px solid var(--card-border);
+  max-width: 480px;
+}
+
+.entry-detail-image img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+}
