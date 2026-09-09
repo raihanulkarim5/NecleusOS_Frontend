@@ -214,7 +214,7 @@ export function ProjectDetailPage({ projectId, onBack }: ProjectDetailPageProps)
           allEntries={entries ?? []}
           onLinkExisting={(ref) => addLinkedItem.mutate({ projectId: project.id, category: 'decisions', ref })}
           onCreateNew={async (title, description) => {
-            const entry = await createEntry.mutateAsync({ title, description, type: 'Decision', priority: 'Medium', tags: [], dueDate: null });
+            const entry = await createEntry.mutateAsync({ title, description, type: 'Decision', tags: [] });
             addLinkedItem.mutate({ projectId: project.id, category: 'decisions', ref: { type: 'entry', id: entry.id, title: entry.title } });
           }}
           onRemove={(refId) => removeLinkedItem.mutate({ projectId: project.id, category: 'decisions', refId })}
@@ -224,10 +224,10 @@ export function ProjectDetailPage({ projectId, onBack }: ProjectDetailPageProps)
       {section === 'problems' && (
         <ProblemSolutionSection
           linkedRefs={project.problems}
-          allEntries={(entries ?? []).filter((e) => e.type === 'Problem')}
+          allEntries={(entries ?? []).filter((e) => e.type === 'Problem/Solution')}
           onLinkExisting={(ref) => addLinkedItem.mutate({ projectId: project.id, category: 'problems', ref })}
           onCreateNew={async (problem, solutionHtml) => {
-            const entry = await createEntry.mutateAsync({ title: problem, description: solutionHtml, type: 'Problem', priority: 'Medium', tags: [], dueDate: null });
+            const entry = await createEntry.mutateAsync({ title: problem, description: solutionHtml, type: 'Problem/Solution', tags: [] });
             addLinkedItem.mutate({ projectId: project.id, category: 'problems', ref: { type: 'entry', id: entry.id, title: entry.title } });
           }}
           onRemove={(refId) => removeLinkedItem.mutate({ projectId: project.id, category: 'problems', refId })}

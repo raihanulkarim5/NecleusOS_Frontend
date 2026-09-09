@@ -8,7 +8,6 @@ import { TasksModule } from './pages/TasksModule';
 import { JournalModule } from './pages/JournalModule';
 import { FinanceModule } from './pages/FinanceModule';
 import { ProjectsModule } from './pages/ProjectsModule';
-import { InboxPage } from './pages/InboxPage';
 import { SkillsModule } from './pages/SkillsModule';
 import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import { CalendarPage } from './pages/CalendarPage';
@@ -34,7 +33,6 @@ export function App() {
   return (
     <AppShell active={activeTab} onNavigate={setActiveTab} onSignOut={() => logout.mutate()}>
       {activeTab === 'dashboard' && <DashboardPage />}
-      {activeTab === 'inbox' && <InboxPage />}
       {activeTab === 'entries' && <EntriesModule />}
       {activeTab === 'tasks' && <TasksModule />}
       {activeTab === 'journal' && <JournalModule />}

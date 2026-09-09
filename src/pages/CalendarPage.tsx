@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useTasks } from '../hooks/useTasks';
-import { useEntries } from '../hooks/useEntries';
 import { useJournalEntries } from '../hooks/useJournal';
 
-type AgendaKind = 'task' | 'reminder' | 'journal';
+type AgendaKind = 'task' | 'journal';
 
 interface AgendaItem {
   date: string;
@@ -15,7 +14,6 @@ interface AgendaItem {
 
 const KIND_LABELS: Record<AgendaKind, string> = {
   task: 'Tasks',
-  reminder: 'Reminders',
   journal: 'Journal',
 };
 
@@ -42,16 +40,15 @@ function buildMonthGrid(year: number, month: number): Date[] {
 
 export function CalendarPage() {
   const { data: tasks, isLoading: tasksLoading } = useTasks();
-  const { data: entries, isLoading: entriesLoading } = useEntries();
   const { data: journalEntries, isLoading: journalLoading } = useJournalEntries();
-  const isLoading = tasksLoading || entriesLoading || journalLoading;
+  const isLoading = tasksLoading || journalLoading;
 
   const [cursor, setCursor] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [activeFilters, setActiveFilters] = useState<Set<AgendaKind>>(
-    new Set(['task', 'reminder', 'journal']),
+    new Set(['task', 'journal']),
   );
   const [selectedDate, setSelectedDate] = useState<string>(() => toDateKey(new Date()));
 
@@ -71,16 +68,6 @@ export function CalendarPage() {
         detail: `${task.status} · ${task.priority} priority${checklistPart}${effortPart}`,
       });
     }
-    for (const entry of entries ?? []) {
-      if (entry.type === 'Reminder' && entry.dueDate) {
-        items.push({
-          date: entry.dueDate,
-          label: entry.title,
-          kind: 'reminder',
-          detail: entry.description || `${entry.priority} priority`,
-        });
-      }
-    }
     for (const journal of journalEntries ?? []) {
       const snippet = journal.content.length > 80 ? `${journal.content.slice(0, 80)}…` : journal.content;
       items.push({
@@ -92,7 +79,7 @@ export function CalendarPage() {
       });
     }
     return items;
-  }, [tasks, entries, journalEntries]);
+  }, [tasks, journalEntries]);
 
   const filteredItems = useMemo(
     () => allItems.filter((item) => activeFilters.has(item.kind)),
@@ -130,7 +117,7 @@ export function CalendarPage() {
   return (
     <div>
       <h1 className="page-title">Calendar</h1>
-      <p className="page-date">Pulled live from Tasks, Reminders, and Journal — no data of its own.</p>
+      <p className="page-date">Pulled live from Tasks and Journal — no data of its own.</p>
 
       <div className="calendar-toolbar">
         <div className="calendar-nav">
