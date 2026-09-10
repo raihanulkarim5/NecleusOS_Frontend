@@ -10,7 +10,6 @@ import { FinanceModule } from './pages/FinanceModule';
 import { ProjectsModule } from './pages/ProjectsModule';
 import { SkillsModule } from './pages/SkillsModule';
 import { KnowledgeModule } from './pages/KnowledgeModule';
-import { CalendarPage } from './pages/CalendarPage';
 import { AppShell, NavKey } from './components/AppShell';
 import './styles/galaxy.css';
 
@@ -40,7 +39,6 @@ export function App() {
       {activeTab === 'projects' && <ProjectsModule />}
       {activeTab === 'skills' && <SkillsModule />}
       {activeTab === 'knowledge' && <KnowledgeModule />}
-      {activeTab === 'calendar' && <CalendarPage />}
     </AppShell>
   );
 }

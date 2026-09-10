@@ -11,7 +11,6 @@ const NAV_ITEMS = [
   { key: 'projects', label: 'Projects' },
   { key: 'skills', label: 'Skills' },
   { key: 'knowledge', label: 'Knowledge' },
-  { key: 'calendar', label: 'Calendar' },
 ] as const;
 
 export type NavKey = (typeof NAV_ITEMS)[number]['key'];
