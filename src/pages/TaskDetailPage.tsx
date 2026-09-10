@@ -20,8 +20,9 @@ function InfoIcon() {
 function ChecklistIconSvg() {
   return (
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M3 9l4 4 8-8" />
-      <path d="M3 20v-8m0 -4v-2m18 18H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z" />
+      <rect x="4" y="4" width="16" height="18" rx="2" />
+      <path d="M9 4V2h6v2" />
+      <path d="M9 12l2 2 4-4" />
     </svg>
   );
 }
