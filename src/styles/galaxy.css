@@ -5140,3 +5140,81 @@ select optgroup {
   gap: 6px;
   min-width: 0;
 }
+
+/* ===== Dashboard — embedded compact Calendar ===== */
+
+.dashboard-calendar-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.dashboard-calendar-agenda {
+  flex: 1;
+  min-width: 260px;
+}
+
+.dashboard-calendar-grid-col {
+  width: 300px;
+  flex-shrink: 0;
+}
+
+.calendar-grid-wrap.compact {
+  padding: 10px;
+  margin-bottom: 0;
+}
+
+.calendar-grid-wrap.compact .calendar-nav {
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.calendar-grid-wrap.compact .calendar-nav button {
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+}
+
+.calendar-grid-wrap.compact .calendar-month-label {
+  font-size: 12px;
+  min-width: 0;
+}
+
+.calendar-grid-wrap.compact .calendar-weekday {
+  font-size: 9px;
+  padding-bottom: 4px;
+}
+
+.calendar-grid-wrap.compact .calendar-grid {
+  gap: 2px;
+}
+
+.calendar-grid-wrap.compact .calendar-cell {
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.calendar-grid-wrap.compact .calendar-cell-date {
+  font-size: 10px;
+}
+
+.calendar-grid-wrap.compact .calendar-cell-dots {
+  min-height: 5px;
+}
+
+.calendar-grid-wrap.compact .calendar-kind-dot {
+  width: 4px;
+  height: 4px;
+}
+
+.calendar-grid-wrap.compact .calendar-cell-more {
+  font-size: 7px;
+}
+
+@media (max-width: 640px) {
+  .dashboard-calendar-grid-col {
+    width: 100%;
+  }
+}
