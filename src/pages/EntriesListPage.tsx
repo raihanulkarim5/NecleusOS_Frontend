@@ -16,6 +16,16 @@ const TYPE_ICONS: Record<EntryType, string> = {
   'Meeting Note': '🗓️',
 };
 
+const TYPE_DOTS: Record<EntryType, string> = {
+  'Note': 'dot-violet',
+  'Idea': 'dot-gold',
+  'Problem/Solution': 'dot-red',
+  'Reminder': 'dot-cyan',
+  'Reference': 'dot-muted',
+  'Decision': 'dot-green',
+  'Meeting Note': 'dot-magenta',
+};
+
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
@@ -78,7 +88,10 @@ export function EntriesListPage({ onOpenEntry }: EntriesListPageProps) {
                 <div className="entry-card-image"><img src={entry.imageUrl} alt="" /></div>
               )}
               <div className="entry-header">
-                <span className="entry-type">{TYPE_ICONS[entry.type]} {entry.type}</span>
+                <span className="entry-header-left">
+                  <span className={`card-dot ${TYPE_DOTS[entry.type]}`} />
+                  <span className="entry-type">{TYPE_ICONS[entry.type]} {entry.type}</span>
+                </span>
                 <button
                   className="entry-fav-btn"
                   onClick={(e) => { e.stopPropagation(); updateEntry.mutate({ id: entry.id, updates: { favorite: !entry.favorite } }); }}
@@ -181,8 +194,6 @@ function QuickCaptureModal({ onClose }: { onClose: () => void }) {
 
         {step === 1 ? (
           <form onSubmit={handleStep1Submit} className="entries-step1-form">
-            <h2 className="modal-title">What's on your mind?</h2>
-
             <div className="entries-step1-row">
               <div className="field">
                 <label>Title</label>

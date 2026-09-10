@@ -16,31 +16,6 @@ const TYPE_ICONS: Record<EntryType, string> = {
   'Meeting Note': '🗓️',
 };
 
-type SubTab = 'overview' | 'links';
-
-function OverviewIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <line x1="3" y1="9" x2="21" y2="9" />
-    </svg>
-  );
-}
-function LinkIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M9 15l6-6" />
-      <path d="M13 6l1.5-1.5a3.5 3.5 0 015 5L18 11" />
-      <path d="M11 18l-1.5 1.5a3.5 3.5 0 01-5-5L6 13" />
-    </svg>
-  );
-}
-
-const SUB_TABS: { key: SubTab; label: string; icon: () => JSX.Element }[] = [
-  { key: 'overview', label: 'Overview', icon: OverviewIcon },
-  { key: 'links', label: 'Links', icon: LinkIcon },
-];
-
 interface EntryDetailPageProps {
   entryId: string;
   onBack: () => void;
@@ -50,7 +25,6 @@ export function EntryDetailPage({ entryId, onBack }: EntryDetailPageProps) {
   const { data: entry, isLoading } = useEntry(entryId);
   const updateEntry = useUpdateEntry();
   const deleteEntry = useDeleteEntry();
-  const [subTab, setSubTab] = useState<SubTab>('overview');
   const [editing, setEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -96,40 +70,16 @@ export function EntryDetailPage({ entryId, onBack }: EntryDetailPageProps) {
         {entry.tags.map(t => <span key={t} className="tag-badge">#{t}</span>)}
       </div>
 
-      <div className="sub-tabs">
-        {SUB_TABS.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button key={tab.key} className={`sub-tab${subTab === tab.key ? ' active' : ''}`} onClick={() => setSubTab(tab.key)}>
-              <span className="sub-tab-icon"><Icon /></span>
-              {tab.label}
-            </button>
-          );
-        })}
+      <div className="detail-panel">
+        {entry.imageUrl && (
+          <div className="entry-detail-image"><img src={entry.imageUrl} alt="" /></div>
+        )}
+        {entry.description ? (
+          <div className="detail-value rich-content" dangerouslySetInnerHTML={{ __html: entry.description }} />
+        ) : (
+          <p className="muted-text">No details yet. Click the pencil icon to add a description.</p>
+        )}
       </div>
-
-      {subTab === 'overview' && (
-        <div className="detail-panel">
-          {entry.imageUrl && (
-            <div className="entry-detail-image"><img src={entry.imageUrl} alt="" /></div>
-          )}
-          {entry.description ? (
-            <div className="detail-value rich-content" dangerouslySetInnerHTML={{ __html: entry.description }} />
-          ) : (
-            <p className="muted-text">No details yet. Click the pencil icon to add a description.</p>
-          )}
-        </div>
-      )}
-
-      {subTab === 'links' && (
-        <div className="detail-panel">
-          {entry.links.length > 0 ? (
-            entry.links.map((link, i) => <div key={i} className="detail-row"><span className="detail-label">{link.type}</span><span className="detail-value">{link.title}</span></div>)
-          ) : (
-            <p className="muted-text">No links yet. Cross-module linking is coming soon.</p>
-          )}
-        </div>
-      )}
 
       {editing && (
         <EditEntryModal

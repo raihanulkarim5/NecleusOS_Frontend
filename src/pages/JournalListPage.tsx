@@ -200,10 +200,18 @@ export function JournalListPage({ onOpenEntry }: JournalListPageProps) {
   );
 }
 
+const LOG_TYPE_DOTS: Record<string, string> = {
+  Daily: 'dot-cyan',
+  Office: 'dot-violet',
+  Personal: 'dot-magenta',
+  Meeting: 'dot-gold',
+};
+
 function JournalListCard({ entry, onOpen }: { entry: JournalEntry; onOpen: () => void }) {
   return (
     <div className="journal-card" onClick={onOpen}>
       <div className="journal-card-top">
+        <span className={`card-dot ${LOG_TYPE_DOTS[entry.logType] ?? 'dot-muted'}`} />
         <span className="entry-type-badge">{entry.logType}</span>
         <span className="journal-date">{entry.date}</span>
         <div className="mood-picker readonly">

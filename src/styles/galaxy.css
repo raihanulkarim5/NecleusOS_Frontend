@@ -4088,7 +4088,8 @@ select optgroup {
 .expenses-modal,
 .budgets-modal,
 .debts-modal,
-.entries-modal {
+.entries-modal,
+.tasks-edit-modal {
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -5111,4 +5112,31 @@ select optgroup {
   width: 100%;
   max-height: 320px;
   object-fit: cover;
+}
+
+/* ===== Shared card-corner accent dot =====
+   The small colored dot + title + favorite-star pattern from the Tasks
+   Kanban card, reused across other card-grid modules (Entries, Journal,
+   Knowledge) for visual consistency. */
+.card-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.card-dot.dot-violet { background: var(--violet); }
+.card-dot.dot-cyan { background: var(--cyan); }
+.card-dot.dot-magenta { background: var(--magenta); }
+.card-dot.dot-gold { background: #f2c94c; }
+.card-dot.dot-green { background: #6fcf7c; }
+.card-dot.dot-red { background: #ff6b9d; }
+.card-dot.dot-muted { background: var(--muted); }
+
+.entry-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
