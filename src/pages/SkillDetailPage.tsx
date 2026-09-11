@@ -749,7 +749,7 @@ function InlineAddRow({ placeholder, onAdd }: { placeholder: string; onAdd: (val
   return (
     <form className="inline-add-row" onSubmit={handleSubmit}>
       <input type="text" placeholder={placeholder} value={value} onChange={(e) => setValue(e.target.value)} />
-      <button type="submit" disabled={!value.trim()}>+ Add</button>
+      <button type="submit" className="inline-add-confirm" disabled={!value.trim()}>+ Add</button>
     </form>
   );
 }
@@ -803,13 +803,13 @@ function AddResourceRow({
             <option value="Link">Link</option>
             <option value="PDF">PDF</option>
           </select>
-          <button type="submit" disabled={!title.trim()}>+ Add</button>
+          <button type="submit" className="inline-add-confirm" disabled={!title.trim()}>+ Add</button>
         </div>
       ) : (
         <div className="inline-add-row" style={{ marginTop: 8 }}>
           <input type="file" accept="application/pdf,.doc,.docx,.txt,.md" onChange={handleFileChange} />
           {fileName && <span className="muted-text" style={{ fontSize: 12 }}>{fileName}</span>}
-          <button type="submit" disabled={!fileUrl}>+ Add</button>
+          <button type="submit" className="inline-add-confirm" disabled={!fileUrl}>+ Add</button>
         </div>
       )}
     </form>
@@ -833,7 +833,7 @@ function AddCourseRow({ onAdd }: { onAdd: (title: string, provider: string, url:
       <input type="text" placeholder="Course title…" value={title} onChange={(e) => setTitle(e.target.value)} />
       <input type="text" placeholder="Provider" value={provider} onChange={(e) => setProvider(e.target.value)} style={{ maxWidth: 110 }} />
       <input type="text" placeholder="URL" value={url} onChange={(e) => setUrl(e.target.value)} />
-      <button type="submit" disabled={!title.trim()}>+ Add</button>
+      <button type="submit" className="inline-add-confirm" disabled={!title.trim()}>+ Add</button>
     </form>
   );
 }
@@ -852,7 +852,7 @@ function AddVideoRow({ onAdd }: { onAdd: (title: string, url: string) => void })
     <form className="inline-add-row" onSubmit={handleSubmit}>
       <input type="text" placeholder="Video title…" value={title} onChange={(e) => setTitle(e.target.value)} />
       <input type="text" placeholder="URL" value={url} onChange={(e) => setUrl(e.target.value)} />
-      <button type="submit" disabled={!title.trim()}>+ Add</button>
+      <button type="submit" className="inline-add-confirm" disabled={!title.trim()}>+ Add</button>
     </form>
   );
 }
@@ -902,7 +902,7 @@ function PracticeTaskRow({
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
           />
-          <button type="submit" disabled={!newTitle.trim() || creating}>{creating ? 'Creating…' : '+ Create'}</button>
+          <button type="submit" className="inline-add-confirm" disabled={!newTitle.trim() || creating}>{creating ? 'Creating…' : '+ Create'}</button>
         </div>
       ) : (
         <div className="inline-add-row" style={{ marginTop: 8 }}>
@@ -912,7 +912,7 @@ function PracticeTaskRow({
               <option key={t.id} value={t.id}>{t.title}</option>
             ))}
           </select>
-          <button type="submit" disabled={!taskId}>+ Link</button>
+          <button type="submit" className="inline-add-confirm" disabled={!taskId}>+ Link</button>
         </div>
       )}
     </form>
@@ -973,7 +973,7 @@ function LinkOrCreateProjectRow({
             onChange={(e) => setNewDescription(e.target.value)}
             className="skill-project-desc-input"
           />
-          <button type="submit" disabled={!newName.trim() || creating} style={{ alignSelf: 'flex-start' }}>
+          <button type="submit" className="inline-add-confirm" disabled={!newName.trim() || creating} style={{ alignSelf: 'flex-start' }}>
             {creating ? 'Creating…' : '+ Create'}
           </button>
         </div>
@@ -985,7 +985,7 @@ function LinkOrCreateProjectRow({
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          <button type="submit" disabled={!projectId}>+ Link</button>
+          <button type="submit" className="inline-add-confirm" disabled={!projectId}>+ Link</button>
         </div>
       )}
     </form>

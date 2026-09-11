@@ -349,7 +349,7 @@ function InlineAddRow({ placeholder, onAdd }: { placeholder: string; onAdd: (val
   return (
     <form className="inline-add-row" onSubmit={handleSubmit}>
       <input type="text" placeholder={placeholder} value={value} onChange={(e) => setValue(e.target.value)} />
-      <button type="submit" disabled={!value.trim()}>+ Add</button>
+      <button type="submit" className="inline-add-confirm" disabled={!value.trim()}>+ Add</button>
     </form>
   );
 }
@@ -387,7 +387,7 @@ function TaskLinkSection({ existingTasks, onLinkExisting, onCreateNew }: {
       {mode === 'new' ? (
         <div className="inline-add-row" style={{ marginTop: 8 }}>
           <input type="text" placeholder="New task title… (also appears in Tasks)" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
-          <button type="submit" disabled={!newTitle.trim() || creating}>{creating ? 'Creating…' : '+ Create'}</button>
+          <button type="submit" className="inline-add-confirm" disabled={!newTitle.trim() || creating}>{creating ? 'Creating…' : '+ Create'}</button>
         </div>
       ) : (
         <div className="inline-add-row" style={{ marginTop: 8 }}>
@@ -395,7 +395,7 @@ function TaskLinkSection({ existingTasks, onLinkExisting, onCreateNew }: {
             <option value="">Choose an existing task…</option>
             {existingTasks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
           </select>
-          <button type="submit" disabled={!taskId}>+ Link</button>
+          <button type="submit" className="inline-add-confirm" disabled={!taskId}>+ Link</button>
         </div>
       )}
     </form>
@@ -443,7 +443,7 @@ function EntryLinkSection({ entryType, linkedRefs, allEntries, onLinkExisting, o
           <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <input type="text" placeholder={`${entryType} title\u2026 (also appears in Entries)`} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
             <RichNotesEditor value={descriptionHtml} onSave={setDescriptionHtml} placeholder="Details\u2026" />
-            <button type="submit" disabled={!newTitle.trim() || creating} style={{ alignSelf: 'flex-start' }}>{creating ? 'Creating\u2026' : '+ Create'}</button>
+            <button type="submit" className="inline-add-confirm" disabled={!newTitle.trim() || creating} style={{ alignSelf: 'flex-start' }}>{creating ? 'Creating\u2026' : '+ Create'}</button>
           </div>
         ) : (
           <div className="inline-add-row" style={{ marginTop: 8 }}>
@@ -451,7 +451,7 @@ function EntryLinkSection({ entryType, linkedRefs, allEntries, onLinkExisting, o
               <option value="">Choose an existing {entryType.toLowerCase()}\u2026</option>
               {availableEntries.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
             </select>
-            <button type="submit" disabled={!entryId}>+ Link</button>
+            <button type="submit" className="inline-add-confirm" disabled={!entryId}>+ Link</button>
           </div>
         )}
       </form>
@@ -499,7 +499,7 @@ function JournalLinkSection({ existingEntries, onLinkExisting, onCreateNew }: {
       {mode === 'new' ? (
         <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <RichNotesEditor value={contentHtml} onSave={setContentHtml} placeholder="Meeting note content\u2026 (also appears in Journal)" />
-          <button type="submit" disabled={!contentHtml.trim() || creating} style={{ alignSelf: 'flex-start' }}>{creating ? 'Creating\u2026' : '+ Create'}</button>
+          <button type="submit" className="inline-add-confirm" disabled={!contentHtml.trim() || creating} style={{ alignSelf: 'flex-start' }}>{creating ? 'Creating\u2026' : '+ Create'}</button>
         </div>
       ) : (
         <div className="inline-add-row" style={{ marginTop: 8 }}>
@@ -507,7 +507,7 @@ function JournalLinkSection({ existingEntries, onLinkExisting, onCreateNew }: {
             <option value="">Choose an existing entry\u2026</option>
             {existingEntries.map((e) => <option key={e.id} value={e.id}>{e.logType} log ({e.date})</option>)}
           </select>
-          <button type="submit" disabled={!entryId}>+ Link</button>
+          <button type="submit" className="inline-add-confirm" disabled={!entryId}>+ Link</button>
         </div>
       )}
     </form>
@@ -527,7 +527,7 @@ function AddResourceRow({ onAdd }: { onAdd: (title: string, url: string) => void
     <form className="inline-add-row" onSubmit={handleSubmit}>
       <input type="text" placeholder="Resource title…" value={title} onChange={(e) => setTitle(e.target.value)} />
       <input type="text" placeholder="URL" value={url} onChange={(e) => setUrl(e.target.value)} />
-      <button type="submit" disabled={!title.trim()}>+ Add</button>
+      <button type="submit" className="inline-add-confirm" disabled={!title.trim()}>+ Add</button>
     </form>
   );
 }
@@ -551,7 +551,7 @@ function AddFileRow({ onAdd }: { onAdd: (title: string, url: string) => void }) 
     <form className="inline-add-row" onSubmit={handleSubmit}>
       <input type="file" onChange={handleFileChange} />
       {fileName && <span className="muted-text" style={{ fontSize: 12 }}>{fileName}</span>}
-      <button type="submit" disabled={!fileUrl}>+ Add</button>
+      <button type="submit" className="inline-add-confirm" disabled={!fileUrl}>+ Add</button>
     </form>
   );
 }
@@ -596,7 +596,7 @@ function ProblemSolutionSection({ linkedRefs, allEntries, onLinkExisting, onCrea
           <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <input type="text" placeholder="Problem\u2026 (also appears in Entries)" value={problem} onChange={(e) => setProblem(e.target.value)} />
             <RichNotesEditor value={solutionHtml} onSave={setSolutionHtml} placeholder="Solution \u2014 code can be pasted here\u2026" />
-            <button type="submit" disabled={!problem.trim() || creating} style={{ alignSelf: 'flex-start' }}>{creating ? 'Creating\u2026' : '+ Create'}</button>
+            <button type="submit" className="inline-add-confirm" disabled={!problem.trim() || creating} style={{ alignSelf: 'flex-start' }}>{creating ? 'Creating\u2026' : '+ Create'}</button>
           </div>
         ) : (
           <div className="inline-add-row" style={{ marginTop: 8 }}>
@@ -604,7 +604,7 @@ function ProblemSolutionSection({ linkedRefs, allEntries, onLinkExisting, onCrea
               <option value="">Choose an existing problem\u2026</option>
               {availableEntries.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
             </select>
-            <button type="submit" disabled={!entryId}>+ Link</button>
+            <button type="submit" className="inline-add-confirm" disabled={!entryId}>+ Link</button>
           </div>
         )}
       </form>

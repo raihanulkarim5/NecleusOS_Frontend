@@ -1443,18 +1443,6 @@ body {
   font-size: 13px;
 }
 
-.skills-add-btn {
-  padding: 9px 16px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--violet), var(--magenta));
-  color: #fff;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
 .skill-card { cursor: pointer; }
 
 /* Modal */
@@ -2087,7 +2075,14 @@ select optgroup {
   cursor: pointer;
 }
 
-.journal-add-btn {
+.journal-add-btn,
+.tasks-add-btn,
+.entries-add-btn,
+.skills-add-btn,
+.expenses-add-btn,
+.budgets-add-btn,
+.debts-add-btn,
+.finance-add-account-btn {
   padding: 10px 16px;
   border-radius: 10px;
   border: none;
@@ -2101,16 +2096,37 @@ select optgroup {
   white-space: nowrap;
 }
 
-.journal-add-btn:hover {
+.journal-add-btn:hover,
+.tasks-add-btn:hover,
+.entries-add-btn:hover,
+.skills-add-btn:hover,
+.expenses-add-btn:hover,
+.budgets-add-btn:hover,
+.debts-add-btn:hover,
+.finance-add-account-btn:hover {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(56, 189, 248, 0.3));
   transform: translateY(-1px);
 }
 
-.journal-add-btn:active {
+.journal-add-btn:active,
+.tasks-add-btn:active,
+.entries-add-btn:active,
+.skills-add-btn:active,
+.expenses-add-btn:active,
+.budgets-add-btn:active,
+.debts-add-btn:active,
+.finance-add-account-btn:active {
   transform: translateY(0);
 }
 
-.journal-add-btn:focus {
+.journal-add-btn:focus,
+.tasks-add-btn:focus,
+.entries-add-btn:focus,
+.skills-add-btn:focus,
+.expenses-add-btn:focus,
+.budgets-add-btn:focus,
+.debts-add-btn:focus,
+.finance-add-account-btn:focus {
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
 }
 
@@ -2341,6 +2357,10 @@ select optgroup {
 
 .icon-btn:active {
   transform: scale(0.95);
+}
+
+.icon-btn.active {
+  color: var(--magenta);
 }
 
 .icon-btn.delete {
@@ -2665,33 +2685,6 @@ select optgroup {
 .tasks-toolbar select {
   min-width: 140px;
   cursor: pointer;
-}
-
-.tasks-add-btn {
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(56, 189, 248, 0.2));
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.tasks-add-btn:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(56, 189, 248, 0.3));
-  transform: translateY(-1px);
-}
-
-.tasks-add-btn:active {
-  transform: translateY(0);
-}
-
-.tasks-add-btn:focus {
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
 }
 
 /* Kanban Board */
@@ -3205,24 +3198,6 @@ select optgroup {
   transition: width 0.3s ease;
 }
 
-.link-add-btn {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px dashed var(--card-border);
-  background: transparent;
-  color: var(--cyan);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.link-add-btn:hover {
-  border-color: var(--cyan);
-  background: rgba(56, 189, 248, 0.08);
-}
-
 /* Edit Form */
 .edit-form {
   display: grid;
@@ -3569,24 +3544,6 @@ select optgroup {
   min-width: 140px;
 }
 
-.entries-add-btn {
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(56, 189, 248, 0.2));
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.entries-add-btn:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(56, 189, 248, 0.3));
-  transform: translateY(-1px);
-}
 
 .entries-grid {
   display: grid;
@@ -3802,31 +3759,6 @@ select optgroup {
   margin-bottom: 20px;
   flex-wrap: wrap;
   align-items: center;
-}
-
-.expenses-add-btn,
-.budgets-add-btn,
-.debts-add-btn,
-.finance-add-account-btn {
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(56, 189, 248, 0.2));
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.expenses-add-btn:hover,
-.budgets-add-btn:hover,
-.debts-add-btn:hover,
-.finance-add-account-btn:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(56, 189, 248, 0.3));
-  transform: translateY(-1px);
 }
 
 .expenses-total {
@@ -4675,6 +4607,13 @@ select optgroup {
 .inline-add-confirm {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(56, 189, 248, 0.3));
   color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inline-add-confirm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .inline-add-cancel {

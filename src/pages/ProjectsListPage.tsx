@@ -210,7 +210,7 @@ function TemplateCard({
           }}
         >
           <input type="text" placeholder="New project name…" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-          <button type="submit" disabled={!name.trim()}>Create</button>
+          <button type="submit" className="inline-add-confirm" disabled={!name.trim()}>Create</button>
         </form>
       ) : (
         <button className="skills-add-btn" style={{ marginTop: 8 }} onClick={() => setNaming(true)}>Use this template</button>

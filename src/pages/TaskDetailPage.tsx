@@ -80,11 +80,11 @@ export function TaskDetailPage({ taskId, onBack }: TaskDetailPageProps) {
         <button className="back-button" onClick={onBack}>← Back</button>
         <div className="detail-header-actions">
           <button
-            className={`icon-btn${currentTask.favorite ? ' active' : ''}`}
+            className="icon-btn"
             onClick={() => toggleFavorite.mutate(currentTask.id)}
             title="Favorite"
           >
-            ★
+            {currentTask.favorite ? '⭐' : '☆'}
           </button>
           <button className="icon-btn" onClick={() => setEditing(true)} title="Edit">✏️</button>
           <button className="icon-btn delete" onClick={() => setShowDeleteConfirm(true)} title="Delete">🗑️</button>
