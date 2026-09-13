@@ -119,10 +119,8 @@ export function ProjectDetailPage({ projectId, onBack }: ProjectDetailPageProps)
 
   return (
     <div>
-      <div className="breadcrumb">
-        <span className="breadcrumb-link" onClick={onBack}>Projects</span>
-        <span className="breadcrumb-sep">/</span>
-        <span className="breadcrumb-current">{project.name}</span>
+      <div className="detail-header">
+        <button className="back-button" onClick={onBack}>← Back</button>
       </div>
 
       <div className="skill-detail-header">
