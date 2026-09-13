@@ -6,7 +6,7 @@ export function Logo() {
         <span className="logo-core" />
       </div>
       <div className="logo-copy">
-        <span className="logo-name">NecleusOS</span>
+        <span className="logo-name">Mesh</span>
         <span className="logo-tag">A new orbit for your workspace</span>
       </div>
     </div>

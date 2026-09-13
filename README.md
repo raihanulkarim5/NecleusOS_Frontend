@@ -1,6 +1,6 @@
-# Personal OS — Frontend
+# Mesh — Frontend
 
-React + TypeScript frontend for Personal OS, built module by module against
+React + TypeScript frontend for Mesh, built module by module against
 dummy data before the .NET Core API exists.
 
 ## Current module: Auth

@@ -138,7 +138,7 @@ let budgetPlans: BudgetPlan[] = [
     targetAmount: 2200,
     currentAmount: 650,
     targetDate: '2026-12-01',
-    notes: 'Upgrade dev machine for NecleusOS work',
+    notes: 'Upgrade dev machine for Mesh work',
     links: [],
     order: 0,
     createdAt: '2026-07-01',

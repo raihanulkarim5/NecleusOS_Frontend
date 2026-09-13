@@ -2,7 +2,7 @@ import type { AuthService } from './authService';
 import type { AuthProvider, AuthSession, LoginCredentials, RegisterDetails } from '../types/auth';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const SESSION_KEY = 'personal-os-mock-session';
+const SESSION_KEY = 'mesh-mock-session';
 
 function fakeToken() {
   return `mock-token-${Math.random().toString(36).slice(2)}`;

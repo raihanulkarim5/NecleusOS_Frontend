@@ -21,7 +21,7 @@ function moveInArray<T>(arr: T[], index: number, direction: 'up' | 'down'): T[] 
 let projects: Project[] = [
   {
     id: 'p1',
-    name: 'Personal OS',
+    name: 'Mesh',
     description: 'React frontend, .NET Core API, SQL Server — module by module against dummy data first.',
     status: 'Active',
     progressPercent: 60,
@@ -72,7 +72,7 @@ let projects: Project[] = [
   {
     id: 'p3',
     name: 'AI Assistant',
-    description: 'Exploring an optional AI plug-in layer for Personal OS — bring-your-own API key.',
+    description: 'Exploring an optional AI plug-in layer for Mesh — bring-your-own API key.',
     status: 'Active',
     progressPercent: 10,
     isTemplate: false,
@@ -92,7 +92,7 @@ let projects: Project[] = [
   {
     id: 'p4',
     name: 'New Module Kickoff',
-    description: 'Standard milestone skeleton for starting any new Personal OS module.',
+    description: 'Standard milestone skeleton for starting any new Mesh module.',
     status: 'Active',
     progressPercent: 0,
     isTemplate: true,

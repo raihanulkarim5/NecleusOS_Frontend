@@ -41,7 +41,7 @@ export function LoginPage({ onSwitchToRegister }: LoginPageProps) {
           <div className="auth-card email-card">
             <div className="auth-card__nebula" />
             <h1>Welcome back</h1>
-            <p className="sub">Sign in to NecleusOS with email</p>
+            <p className="sub">Sign in to Mesh with email</p>
 
             {login.isError && <p className="auth-error">Couldn't sign in. Try again.</p>}
 
@@ -166,7 +166,7 @@ export function LoginPage({ onSwitchToRegister }: LoginPageProps) {
           </div>
           <div className="provider-panel__content">
             <h2>Launch with your provider</h2>
-            <p className="sub">Use social signing to jump into your NecleusOS universe faster.</p>
+            <p className="sub">Use social signing to jump into your Mesh universe faster.</p>
 
             {socialLogin.isError && <p className="auth-error">Social sign-in failed. Try again.</p>}
 
