@@ -1,9 +1,9 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useDeleteJournalEntry, useJournalEntry, useMoveJournalEntry, useUpdateJournalEntry } from '../hooks/useJournal';
 import { RichNotesEditor } from '../components/RichNotesEditor';
 import { MoveButtons } from '../components/MoveButtons';
 import type { JournalEntry, JournalLogType } from '../types/journal';
-import type { LinkRef, LinkableType } from '../types/link';
 
 const LOG_TYPES: JournalLogType[] = ['Daily', 'Office', 'Personal', 'Meeting'];
 
@@ -56,37 +56,8 @@ export function JournalDetailPage({ entryId, onBack }: JournalDetailPageProps) {
 
   const [subTab, setSubTab] = useState<SubTab>('overview');
   const [editing, setEditing] = useState(false);
-  const [editingContent, setEditingContent] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddLink, setShowAddLink] = useState(false);
-
-  // Edit form state
-  const [formLogType, setFormLogType] = useState<JournalLogType>('Daily');
-  const [formDate, setFormDate] = useState('');
-  const [formMood, setFormMood] = useState(3);
-  const [formWins, setFormWins] = useState('');
-  const [formMistakes, setFormMistakes] = useState('');
-  const [formLearnings, setFormLearnings] = useState('');
-  const [formGratitude, setFormGratitude] = useState('');
-  const [formTags, setFormTags] = useState('');
-  const [formLinks, setFormLinks] = useState<LinkRef[]>([]);
-
-  // Initialize edit form when entry loads
-  useEffect(() => {
-    if (entry && !editing) {
-      setFormLogType(entry.logType);
-      setFormDate(entry.date);
-      setFormMood(entry.mood);
-      setFormWins(entry.wins.join(', '));
-      setFormMistakes(entry.mistakes.join(', '));
-      setFormLearnings(entry.learnings.join(', '));
-      setFormGratitude(entry.gratitude.join(', '));
-      setFormTags(entry.tags.join(', '));
-      setFormLinks(entry.links);
-      setEditingContent(entry.content);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entry?.id, editing]);
 
   if (isLoading || !entry) {
     return (
@@ -99,47 +70,6 @@ export function JournalDetailPage({ entryId, onBack }: JournalDetailPageProps) {
 
   // Narrow type for TypeScript
   const currentEntry = entry!;
-
-  function parseList(value: string): string[] {
-    return value
-      .split(',')
-      .map((v) => v.trim())
-      .filter(Boolean);
-  }
-
-  function handleStartEdit() {
-    setEditing(true);
-    setFormLogType(currentEntry.logType);
-    setFormDate(currentEntry.date);
-    setFormMood(currentEntry.mood);
-    setFormWins(currentEntry.wins.join(', '));
-    setFormMistakes(currentEntry.mistakes.join(', '));
-    setFormLearnings(currentEntry.learnings.join(', '));
-    setFormGratitude(currentEntry.gratitude.join(', '));
-    setFormTags(currentEntry.tags.join(', '));
-    setFormLinks(currentEntry.links);
-    setEditingContent(currentEntry.content);
-  }
-
-  function handleSaveEdit(e: FormEvent) {
-    e.preventDefault();
-    updateEntry.mutate({
-      id: currentEntry.id,
-      updates: {
-        logType: formLogType,
-        date: formDate,
-        mood: formMood,
-        content: editingContent,
-        wins: parseList(formWins),
-        mistakes: parseList(formMistakes),
-        learnings: parseList(formLearnings),
-        gratitude: parseList(formGratitude),
-        tags: parseList(formTags),
-        links: formLinks,
-      },
-    });
-    setEditing(false);
-  }
 
   function handleDelete() {
     deleteEntry.mutate(currentEntry.id);
@@ -160,16 +90,8 @@ export function JournalDetailPage({ entryId, onBack }: JournalDetailPageProps) {
         <button className="back-button" onClick={onBack}>← Back</button>
         <div className="detail-header-actions">
           <MoveButtons canMoveUp={true} canMoveDown={true} onMoveUp={handleMoveUp} onMoveDown={handleMoveDown} />
-          {!editing ? (
-            <>
-              <button className="icon-btn" onClick={handleStartEdit} title="Edit">✏️</button>
-              <button className="icon-btn delete" onClick={() => setShowDeleteConfirm(true)} title="Delete">🗑</button>
-            </>
-          ) : (
-            <>
-              <button className="icon-btn" onClick={() => setEditing(false)}>✕</button>
-            </>
-          )}
+          <button className="icon-btn" onClick={() => setEditing(true)} title="Edit">✏️</button>
+          <button className="icon-btn delete" onClick={() => setShowDeleteConfirm(true)} title="Delete">🗑</button>
         </div>
       </div>
 
@@ -183,64 +105,99 @@ export function JournalDetailPage({ entryId, onBack }: JournalDetailPageProps) {
         </div>
       )}
 
-      {!editing ? (
-        <>
-          <h1 className="page-title">{currentEntry.date}</h1>
-          <p className="page-date">{currentEntry.logType}</p>
+      <h1 className="page-title">{currentEntry.date}</h1>
+      <p className="page-date">{currentEntry.logType}</p>
 
-          <div className="sub-tabs">
-            {SUB_TABS.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.key}
-                  className={`sub-tab${subTab === tab.key ? ' active' : ''}`}
-                  onClick={() => setSubTab(tab.key)}
-                >
-                  <span className="sub-tab-icon"><Icon /></span>
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+      <div className="sub-tabs">
+        {SUB_TABS.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.key}
+              className={`sub-tab${subTab === tab.key ? ' active' : ''}`}
+              onClick={() => setSubTab(tab.key)}
+            >
+              <span className="sub-tab-icon"><Icon /></span>
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
 
-          {subTab === 'overview' && (
-            <JournalOverviewTab entry={currentEntry} />
-          )}
+      {subTab === 'overview' && (
+        <JournalOverviewTab entry={currentEntry} />
+      )}
 
-          {subTab === 'reflections' && (
-            <JournalReflectionsTab entry={currentEntry} />
-          )}
+      {subTab === 'reflections' && (
+        <JournalReflectionsTab entry={currentEntry} />
+      )}
 
-          {subTab === 'links' && (
-            <JournalLinksTab entry={currentEntry} onAddLink={() => setShowAddLink(true)} />
-          )}
-        </>
-      ) : (
-        <form onSubmit={handleSaveEdit} className="edit-form">
-          <h2 className="modal-title">Edit entry</h2>
+      {subTab === 'links' && (
+        <JournalLinksTab entry={currentEntry} onAddLink={() => setShowAddLink(true)} />
+      )}
 
+      {editing && (
+        <EditJournalModal
+          entry={currentEntry}
+          onClose={() => setEditing(false)}
+          onSave={(updates) => { updateEntry.mutate({ id: currentEntry.id, updates }); setEditing(false); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditJournalModal({
+  entry, onClose, onSave,
+}: {
+  entry: JournalEntry;
+  onClose: () => void;
+  onSave: (updates: {
+    logType: JournalLogType; date: string; mood: number; content: string;
+    wins: string[]; mistakes: string[]; learnings: string[]; gratitude: string[]; tags: string[];
+  }) => void;
+}) {
+  const [logType, setLogType] = useState<JournalLogType>(entry.logType);
+  const [date, setDate] = useState(entry.date);
+  const [mood, setMood] = useState(entry.mood);
+  const [content, setContent] = useState(entry.content);
+  const [wins, setWins] = useState(entry.wins.join(', '));
+  const [mistakes, setMistakes] = useState(entry.mistakes.join(', '));
+  const [learnings, setLearnings] = useState(entry.learnings.join(', '));
+  const [gratitude, setGratitude] = useState(entry.gratitude.join(', '));
+  const [tags, setTags] = useState(entry.tags.join(', '));
+
+  function parseList(value: string): string[] {
+    return value.split(',').map((v) => v.trim()).filter(Boolean);
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    onSave({
+      logType, date, mood, content,
+      wins: parseList(wins),
+      mistakes: parseList(mistakes),
+      learnings: parseList(learnings),
+      gratitude: parseList(gratitude),
+      tags: parseList(tags),
+    });
+  }
+
+  return createPortal(
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal journal-modal wide" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">Edit entry</h2>
+        <form onSubmit={handleSubmit}>
           <div className="edit-form-row">
             <div className="field">
               <label htmlFor="edit-log-type">Type</label>
-              <select
-                id="edit-log-type"
-                value={formLogType}
-                onChange={(e) => setFormLogType(e.target.value as JournalLogType)}
-              >
-                {LOG_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
+              <select id="edit-log-type" value={logType} onChange={(e) => setLogType(e.target.value as JournalLogType)}>
+                {LOG_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div className="field">
               <label htmlFor="edit-date">Date</label>
-              <input
-                id="edit-date"
-                type="date"
-                value={formDate}
-                onChange={(e) => setFormDate(e.target.value)}
-              />
+              <input id="edit-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
             <div className="field">
               <label>Mood</label>
@@ -249,8 +206,8 @@ export function JournalDetailPage({ entryId, onBack }: JournalDetailPageProps) {
                   <button
                     type="button"
                     key={m}
-                    className={`mood-dot${formMood === m ? ' active' : ''}`}
-                    onClick={() => setFormMood(m)}
+                    className={`mood-dot${mood === m ? ' active' : ''}`}
+                    onClick={() => setMood(m)}
                     aria-label={`Mood ${m} of 5`}
                   />
                 ))}
@@ -260,71 +217,41 @@ export function JournalDetailPage({ entryId, onBack }: JournalDetailPageProps) {
 
           <div className="field">
             <label>Content</label>
-            <RichNotesEditor
-              value={editingContent}
-              onSave={setEditingContent}
-              placeholder="Describe your day…"
-            />
+            <RichNotesEditor value={content} onSave={setContent} placeholder="Describe your day…" />
           </div>
 
-          <div className="edit-form-reflections">
+          <div className="journal-modal-reflections">
             <div className="field">
-              <label htmlFor="edit-wins">Wins (comma separated)</label>
-              <input
-                id="edit-wins"
-                type="text"
-                value={formWins}
-                onChange={(e) => setFormWins(e.target.value)}
-              />
+              <label htmlFor="edit-wins">Wins</label>
+              <input id="edit-wins" type="text" value={wins} onChange={(e) => setWins(e.target.value)} placeholder="Comma separated" />
             </div>
             <div className="field">
-              <label htmlFor="edit-mistakes">Mistakes (comma separated)</label>
-              <input
-                id="edit-mistakes"
-                type="text"
-                value={formMistakes}
-                onChange={(e) => setFormMistakes(e.target.value)}
-              />
+              <label htmlFor="edit-mistakes">Mistakes</label>
+              <input id="edit-mistakes" type="text" value={mistakes} onChange={(e) => setMistakes(e.target.value)} placeholder="Comma separated" />
             </div>
             <div className="field">
-              <label htmlFor="edit-learnings">Learnings (comma separated)</label>
-              <input
-                id="edit-learnings"
-                type="text"
-                value={formLearnings}
-                onChange={(e) => setFormLearnings(e.target.value)}
-              />
+              <label htmlFor="edit-learnings">Learnings</label>
+              <input id="edit-learnings" type="text" value={learnings} onChange={(e) => setLearnings(e.target.value)} placeholder="Comma separated" />
             </div>
             <div className="field">
-              <label htmlFor="edit-gratitude">Gratitude (comma separated)</label>
-              <input
-                id="edit-gratitude"
-                type="text"
-                value={formGratitude}
-                onChange={(e) => setFormGratitude(e.target.value)}
-              />
+              <label htmlFor="edit-gratitude">Gratitude</label>
+              <input id="edit-gratitude" type="text" value={gratitude} onChange={(e) => setGratitude(e.target.value)} placeholder="Comma separated" />
             </div>
           </div>
 
           <div className="field">
-            <label htmlFor="edit-tags">Tags (comma separated)</label>
-            <input
-              id="edit-tags"
-              type="text"
-              value={formTags}
-              onChange={(e) => setFormTags(e.target.value)}
-            />
+            <label htmlFor="edit-tags">Tags</label>
+            <input id="edit-tags" type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Comma separated" />
           </div>
 
-          <div className="edit-form-actions">
-            <button type="button" className="modal-cancel" onClick={() => setEditing(false)}>Cancel</button>
-            <button type="submit" className="auth-submit" disabled={updateEntry.isPending}>
-              {updateEntry.isPending ? 'Saving…' : 'Save changes'}
-            </button>
+          <div className="modal-actions">
+            <button type="button" className="modal-cancel" onClick={onClose}>Cancel</button>
+            <button type="submit" className="modal-submit">Save changes</button>
           </div>
         </form>
-      )}
-    </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
