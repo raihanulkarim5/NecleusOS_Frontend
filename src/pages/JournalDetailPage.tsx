@@ -3,7 +3,9 @@ import { createPortal } from 'react-dom';
 import { useDeleteJournalEntry, useJournalEntry, useMoveJournalEntry, useUpdateJournalEntry } from '../hooks/useJournal';
 import { RichNotesEditor } from '../components/RichNotesEditor';
 import { MoveButtons } from '../components/MoveButtons';
+import { LinkPickerModal } from '../components/LinkPickerModal';
 import type { JournalEntry, JournalLogType } from '../types/journal';
+import type { LinkRef } from '../types/link';
 
 const LOG_TYPES: JournalLogType[] = ['Daily', 'Office', 'Personal', 'Meeting'];
 
@@ -133,7 +135,24 @@ export function JournalDetailPage({ entryId, onBack }: JournalDetailPageProps) {
       )}
 
       {subTab === 'links' && (
-        <JournalLinksTab entry={currentEntry} onAddLink={() => setShowAddLink(true)} />
+        <JournalLinksTab
+          entry={currentEntry}
+          onAddLink={() => setShowAddLink(true)}
+          onRemoveLink={(link) => updateEntry.mutate({
+            id: currentEntry.id,
+            updates: { links: currentEntry.links.filter(l => !(l.type === link.type && l.id === link.id)) },
+          })}
+        />
+      )}
+
+      {showAddLink && (
+        <LinkPickerModal
+          currentType="journal"
+          currentId={currentEntry.id}
+          existingLinks={currentEntry.links}
+          onClose={() => setShowAddLink(false)}
+          onSelect={(ref) => updateEntry.mutate({ id: currentEntry.id, updates: { links: [...currentEntry.links, ref] } })}
+        />
       )}
 
       {editing && (
@@ -353,7 +372,9 @@ function JournalReflectionsTab({ entry }: { entry: JournalEntry }) {
   );
 }
 
-function JournalLinksTab({ entry, onAddLink }: { entry: JournalEntry; onAddLink: () => void }) {
+function JournalLinksTab({
+  entry, onAddLink, onRemoveLink,
+}: { entry: JournalEntry; onAddLink: () => void; onRemoveLink: (link: LinkRef) => void }) {
   return (
     <div className="detail-panel links-panel">
       {entry.links.length > 0 ? (
@@ -362,6 +383,7 @@ function JournalLinksTab({ entry, onAddLink }: { entry: JournalEntry; onAddLink:
             <div key={`${link.type}-${link.id}`} className="link-item">
               <div className="link-item-type">{link.type}</div>
               <div className="link-item-title">{link.title}</div>
+              <button className="link-item-remove" onClick={() => onRemoveLink(link)}>✕</button>
             </div>
           ))}
         </div>

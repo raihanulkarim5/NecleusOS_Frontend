@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDeleteTask, useToggleTaskFavorite, useToggleChecklistItem, useUpdateTask, useTask } from '../hooks/useTasks';
+import { LinkPickerModal } from '../components/LinkPickerModal';
 import type { Task, TaskPriority, TaskStatus, TaskUpdate } from '../types/task';
 
 const STATUSES: TaskStatus[] = ['Open', 'In Progress', 'Done', 'Archived'];
@@ -57,6 +58,7 @@ export function TaskDetailPage({ taskId, onBack }: TaskDetailPageProps) {
   const [subTab, setSubTab] = useState<SubTab>('overview');
   const [editing, setEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showLinkPicker, setShowLinkPicker] = useState(false);
 
   if (isLoading || !task) {
     return (
@@ -184,14 +186,31 @@ export function TaskDetailPage({ taskId, onBack }: TaskDetailPageProps) {
                 <div key={`${link.type}-${link.id}`} className="link-item">
                   <div className="link-item-type">{link.type}</div>
                   <div className="link-item-title">{link.title}</div>
+                  <button
+                    className="link-item-remove"
+                    onClick={() => updateTask.mutate({
+                      id: currentTask.id,
+                      updates: { links: currentTask.links.filter(l => !(l.type === link.type && l.id === link.id)) },
+                    })}
+                  >✕</button>
                 </div>
               ))}
             </div>
           ) : (
             <p className="muted-text">No links yet.</p>
           )}
-          <button className="link-add-btn">+ Link item</button>
+          <button className="link-add-btn" onClick={() => setShowLinkPicker(true)}>+ Link item</button>
         </div>
+      )}
+
+      {showLinkPicker && (
+        <LinkPickerModal
+          currentType="task"
+          currentId={currentTask.id}
+          existingLinks={currentTask.links}
+          onClose={() => setShowLinkPicker(false)}
+          onSelect={(ref) => updateTask.mutate({ id: currentTask.id, updates: { links: [...currentTask.links, ref] } })}
+        />
       )}
 
       {editing && (
