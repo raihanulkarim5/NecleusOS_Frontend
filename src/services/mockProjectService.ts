@@ -149,6 +149,11 @@ export const mockProjectService: ProjectService = {
     return projects.find((p) => p.id === id) ?? null;
   },
 
+  async deleteProject(id: string): Promise<void> {
+    await delay(300);
+    projects = projects.filter((p) => p.id !== id);
+  },
+
   async createProject(draft: ProjectDraft): Promise<Project> {
     await delay(400);
     const now = today();

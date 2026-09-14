@@ -210,6 +210,11 @@ export const mockSkillService: SkillService = {
     return skills.find((s) => s.id === id) ?? null;
   },
 
+  async deleteSkill(id: string): Promise<void> {
+    await delay(300);
+    skills = skills.filter((s) => s.id !== id);
+  },
+
   async getRoadmaps(): Promise<SkillRoadmap[]> {
     await delay(300);
     return roadmaps;

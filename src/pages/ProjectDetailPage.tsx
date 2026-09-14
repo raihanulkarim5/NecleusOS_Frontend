@@ -1,10 +1,12 @@
 import { ChangeEvent, FormEvent, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   useAddMilestoneTask,
   useAddProjectFile,
   useAddProjectLinkedItem,
   useAddProjectMilestone,
   useAddProjectResource,
+  useDeleteProject,
   useMoveProjectMilestone,
   useProject,
   useRemoveMilestoneTask,
@@ -79,13 +81,11 @@ export function ProjectDetailPage({ projectId, onBack }: ProjectDetailPageProps)
   const { data: entries } = useEntries();
   const createJournalEntry = useCreateJournalEntry();
   const { data: journalEntries } = useJournalEntries();
+  const deleteProject = useDeleteProject();
 
   const [section, setSection] = useState<SectionKey>('overview');
   const [editingInfo, setEditingInfo] = useState(false);
-  const [nameDraft, setNameDraft] = useState('');
-  const [descriptionDraft, setDescriptionDraft] = useState('');
-  const [statusDraft, setStatusDraft] = useState<ProjectStatus>('Active');
-  const [tagsDraft, setTagsDraft] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (isLoading || !project) {
     return <p className="muted-text">Loading project…</p>;
@@ -97,69 +97,55 @@ export function ProjectDetailPage({ projectId, onBack }: ProjectDetailPageProps)
   const linkedJournalIds = new Set(project.journalEntries.map((j) => j.id));
   const unlinkedJournalEntries = (journalEntries ?? []).filter((j) => !linkedJournalIds.has(j.id));
 
-  function startEditingInfo() {
-    setNameDraft(project!.name);
-    setDescriptionDraft(project!.description);
-    setStatusDraft(project!.status);
-    setTagsDraft(project!.tags.join(', '));
-    setEditingInfo(true);
-  }
-
-  function saveInfo() {
-    if (!nameDraft.trim()) return;
-    updateBasicInfo.mutate({
-      id: project!.id,
-      name: nameDraft.trim(),
-      description: descriptionDraft.trim(),
-      status: statusDraft,
-      tags: tagsDraft.split(',').map((t) => t.trim()).filter(Boolean),
-    });
-    setEditingInfo(false);
-  }
-
   return (
     <div>
       <div className="detail-header">
         <button className="back-button" onClick={onBack}>← Back</button>
+        <div className="detail-header-actions">
+          <button className="skill-delete-btn" onClick={() => toggleTemplate.mutate(project.id)}>
+            {project.isTemplate ? 'Unmark template' : 'Mark as template'}
+          </button>
+          <button
+            className="icon-btn"
+            title={project.favorite ? 'Unfavorite' : 'Favorite'}
+            onClick={() => toggleFavorite.mutate(project.id)}
+          >
+            {project.favorite ? '⭐' : '☆'}
+          </button>
+          <button className="icon-btn" onClick={() => setEditingInfo(true)} title="Edit">✏️</button>
+          <button className="icon-btn delete" onClick={() => setShowDeleteConfirm(true)} title="Delete">🗑️</button>
+        </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="confirm-dialog">
+          <p>Delete <strong>{project.name}</strong>? This cannot be undone.</p>
+          <div className="confirm-actions">
+            <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+            <button className="delete" onClick={() => { deleteProject.mutate(project.id); onBack(); }}>Delete</button>
+          </div>
+        </div>
+      )}
 
       <div className="skill-detail-header">
         <div style={{ flex: 1 }}>
-          {editingInfo ? (
-            <div className="skill-info-edit">
-              <input type="text" className="skill-info-name-input" value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} autoFocus />
-              <div className="skill-info-edit-row">
-                <input type="text" placeholder="Tags (comma separated)" value={tagsDraft} onChange={(e) => setTagsDraft(e.target.value)} />
-                <select value={statusDraft} onChange={(e) => setStatusDraft(e.target.value as ProjectStatus)}>
-                  <option value="Active">Active</option>
-                  <option value="Archived">Archived</option>
-                </select>
-              </div>
-              <textarea rows={2} placeholder="Description…" value={descriptionDraft} onChange={(e) => setDescriptionDraft(e.target.value)} />
-              <div className="modal-actions" style={{ marginTop: 6 }}>
-                <button type="button" className="modal-cancel" onClick={() => setEditingInfo(false)}>Cancel</button>
-                <button type="button" className="auth-submit" onClick={saveInfo}>Save</button>
-              </div>
-            </div>
-          ) : (
-            <div onClick={startEditingInfo} className="skill-info-display">
-              <h1 className="page-title">{project.name}</h1>
-              <p className="page-date">{project.status}{project.isTemplate ? ' · Template' : ''} <span className="skill-edit-hint">(click to edit)</span></p>
-              <p className="skill-brief">{project.description || 'No description yet — click to add one.'}</p>
-            </div>
-          )}
+          <h1 className="page-title">{project.name}</h1>
+          <p className="page-date">{project.status}{project.isTemplate ? ' · Template' : ''}</p>
+          <p className="skill-brief">{project.description || 'No description yet.'}</p>
           <div className="skill-progress-inline">
             <div className="bar-track"><div className="bar-fill" style={{ width: `${project.progressPercent}%` }} /></div>
             <span className="skill-progress-label">{project.progressPercent}%</span>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-          <button className="skill-delete-btn" onClick={() => toggleTemplate.mutate(project.id)}>
-            {project.isTemplate ? 'Unmark template' : 'Mark as template'}
-          </button>
-          <button className={`entry-fav${project.favorite ? ' active' : ''}`} onClick={() => toggleFavorite.mutate(project.id)} aria-label="Favorite">★</button>
-        </div>
       </div>
+
+      {editingInfo && (
+        <EditProjectModal
+          project={project}
+          onClose={() => setEditingInfo(false)}
+          onSave={(info) => { updateBasicInfo.mutate({ id: project.id, ...info }); setEditingInfo(false); }}
+        />
+      )}
 
       <div className="sub-tabs">
         {SECTIONS.map((s) => {
@@ -333,6 +319,64 @@ function OverviewSection({ project }: { project: Project }) {
         </div>
       )}
     </div>
+  );
+}
+
+function EditProjectModal({
+  project, onClose, onSave,
+}: {
+  project: Project;
+  onClose: () => void;
+  onSave: (info: { name: string; description: string; status: ProjectStatus; tags: string[] }) => void;
+}) {
+  const [name, setName] = useState(project.name);
+  const [description, setDescription] = useState(project.description);
+  const [status, setStatus] = useState<ProjectStatus>(project.status);
+  const [tags, setTags] = useState(project.tags.join(', '));
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onSave({
+      name: name.trim(),
+      description: description.trim(),
+      status,
+      tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+    });
+  }
+
+  return createPortal(
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal finance-modal wide" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">Edit project</h2>
+        <form onSubmit={handleSubmit} className="finance-modal-form horizontal">
+          <div className="field field-full">
+            <label>Name</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
+          </div>
+          <div className="field">
+            <label>Tags</label>
+            <input type="text" placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Status</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value as ProjectStatus)}>
+              <option value="Active">Active</option>
+              <option value="Archived">Archived</option>
+            </select>
+          </div>
+          <div className="field field-full">
+            <label>Description</label>
+            <textarea rows={2} placeholder="Description…" value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+          <div className="modal-actions field-full">
+            <button type="button" className="modal-cancel" onClick={onClose}>Cancel</button>
+            <button type="submit" className="modal-submit">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body,
   );
 }
 

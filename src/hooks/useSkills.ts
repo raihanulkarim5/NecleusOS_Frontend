@@ -38,6 +38,17 @@ export function useCreateSkill() {
   });
 }
 
+export function useDeleteSkill() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => skillService.deleteSkill(id),
+    onSuccess: (_, id) => {
+      queryClient.setQueryData(['skills'], (old: Skill[] | undefined) => (old ? old.filter((s) => s.id !== id) : old));
+      queryClient.removeQueries({ queryKey: ['skill', id] });
+    },
+  });
+}
+
 // Every mutation below writes the updated Skill straight into both the
 // detail cache (['skill', id]) and the list cache (['skills']) instead of
 // just invalidating and waiting on a second round-trip — this is what

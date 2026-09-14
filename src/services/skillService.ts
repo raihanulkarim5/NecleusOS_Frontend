@@ -8,6 +8,7 @@ export interface SkillService {
   createRoadmap(draft: RoadmapDraft): Promise<SkillRoadmap>;
   createSkill(draft: SkillDraft): Promise<Skill>;
   updateBasicInfo(id: string, info: { name: string; category: string; status: SkillStatus; description: string }): Promise<Skill>;
+  deleteSkill(id: string): Promise<void>;
 
   toggleMilestone(skillId: string, milestoneId: string): Promise<Skill>;
   addMilestone(skillId: string, title: string): Promise<Skill>;

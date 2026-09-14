@@ -1,4 +1,5 @@
 import { ChangeEvent, FormEvent, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   useAddCourse,
   useAddMilestone,
@@ -8,6 +9,7 @@ import {
   useAddResource,
   useAddSyllabusItem,
   useAddVideo,
+  useDeleteSkill,
   useLinkSkillProject,
   useMoveMilestone,
   useMovePracticeTask,
@@ -160,15 +162,13 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   const toggleFavorite = useToggleSkillFavorite();
   const updateNotes = useUpdateSkillNotes();
   const updateBasicInfo = useUpdateSkillBasicInfo();
+  const deleteSkill = useDeleteSkill();
   const { data: tasks } = useTasks();
   const { data: allProjects } = useProjects();
 
   const [section, setSection] = useState<SectionKey>('overview');
   const [editingInfo, setEditingInfo] = useState(false);
-  const [nameDraft, setNameDraft] = useState('');
-  const [categoryDraft, setCategoryDraft] = useState('');
-  const [statusDraft, setStatusDraft] = useState<SkillStatus>('Not Started');
-  const [descriptionDraft, setDescriptionDraft] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (isLoading || !skill) {
     return <p className="muted-text">Loading skill…</p>;
@@ -182,76 +182,40 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
   const projectById = new Map((allProjects ?? []).map((p) => [p.id, p]));
   const nextStep = skill.milestones.flatMap((m) => m.syllabus).find((s) => !s.done);
 
-  function startEditingInfo() {
-    setNameDraft(skill!.name);
-    setCategoryDraft(skill!.category);
-    setStatusDraft(skill!.status);
-    setDescriptionDraft(skill!.description);
-    setEditingInfo(true);
-  }
-
-  function saveInfo() {
-    if (!nameDraft.trim()) return;
-    updateBasicInfo.mutate({
-      id: skill!.id,
-      name: nameDraft.trim(),
-      category: categoryDraft.trim() || 'General',
-      status: statusDraft,
-      description: descriptionDraft.trim(),
-    });
-    setEditingInfo(false);
-  }
-
   return (
     <div>
       <div className="detail-header">
         <button className="back-button" onClick={onBack}>← Back</button>
+        <div className="detail-header-actions">
+          <button
+            className="icon-btn"
+            title={skill.favorite ? 'Unfavorite' : 'Favorite'}
+            onClick={() => toggleFavorite.mutate(skill.id)}
+          >
+            {skill.favorite ? '⭐' : '☆'}
+          </button>
+          <button className="icon-btn" onClick={() => setEditingInfo(true)} title="Edit">✏️</button>
+          <button className="icon-btn delete" onClick={() => setShowDeleteConfirm(true)} title="Delete">🗑️</button>
+        </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="confirm-dialog">
+          <p>Delete <strong>{skill.name}</strong>? This cannot be undone.</p>
+          <div className="confirm-actions">
+            <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+            <button className="delete" onClick={() => { deleteSkill.mutate(skill.id); onBack(); }}>Delete</button>
+          </div>
+        </div>
+      )}
 
       <div className="skill-detail-header">
         <div style={{ flex: 1 }}>
-          {editingInfo ? (
-            <div className="skill-info-edit">
-              <input
-                type="text"
-                className="skill-info-name-input"
-                value={nameDraft}
-                onChange={(e) => setNameDraft(e.target.value)}
-                autoFocus
-              />
-              <div className="skill-info-edit-row">
-                <input
-                  type="text"
-                  placeholder="Category"
-                  value={categoryDraft}
-                  onChange={(e) => setCategoryDraft(e.target.value)}
-                />
-                <select value={statusDraft} onChange={(e) => setStatusDraft(e.target.value as SkillStatus)}>
-                  <option value="Not Started">Not Started</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Completed">Completed</option>
-                </select>
-              </div>
-              <textarea
-                rows={2}
-                placeholder="Brief description…"
-                value={descriptionDraft}
-                onChange={(e) => setDescriptionDraft(e.target.value)}
-              />
-              <div className="modal-actions" style={{ marginTop: 6 }}>
-                <button type="button" className="modal-cancel" onClick={() => setEditingInfo(false)}>Cancel</button>
-                <button type="button" className="auth-submit" onClick={saveInfo}>Save</button>
-              </div>
-            </div>
-          ) : (
-            <div onClick={startEditingInfo} className="skill-info-display">
-              <h1 className="page-title">{skill.name}</h1>
-              <p className="page-date">{skill.category} · {skill.status} <span className="skill-edit-hint">(click to edit)</span></p>
-              <p className="skill-brief">
-                {skill.description || 'No description yet — click to add one.'}
-              </p>
-            </div>
-          )}
+          <h1 className="page-title">{skill.name}</h1>
+          <p className="page-date">{skill.category} · {skill.status}</p>
+          <p className="skill-brief">
+            {skill.description || 'No description yet.'}
+          </p>
 
           <div className="skill-progress-inline">
             <div className="bar-track">
@@ -260,14 +224,15 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
             <span className="skill-progress-label">{skill.progressPercent}%</span>
           </div>
         </div>
-        <button
-          className={`entry-fav${skill.favorite ? ' active' : ''}`}
-          onClick={() => toggleFavorite.mutate(skill.id)}
-          aria-label={skill.favorite ? 'Unfavorite' : 'Favorite'}
-        >
-          ★
-        </button>
       </div>
+
+      {editingInfo && (
+        <EditSkillModal
+          skill={skill}
+          onClose={() => setEditingInfo(false)}
+          onSave={(info) => { updateBasicInfo.mutate({ id: skill.id, ...info }); setEditingInfo(false); }}
+        />
+      )}
 
       <div className="sub-tabs">
         {SECTIONS.map((s) => {
@@ -280,6 +245,7 @@ export function SkillDetailPage({ skillId, onBack }: SkillDetailPageProps) {
             >
               <span className="sub-tab-icon"><Icon /></span>
               {s.label}
+
             </button>
           );
         })}
@@ -733,6 +699,60 @@ function SyllabusPointRow({
         </p>
       )}
     </div>
+  );
+}
+
+function EditSkillModal({
+  skill, onClose, onSave,
+}: {
+  skill: Skill;
+  onClose: () => void;
+  onSave: (info: { name: string; category: string; status: SkillStatus; description: string }) => void;
+}) {
+  const [name, setName] = useState(skill.name);
+  const [category, setCategory] = useState(skill.category);
+  const [status, setStatus] = useState<SkillStatus>(skill.status);
+  const [description, setDescription] = useState(skill.description);
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onSave({ name: name.trim(), category: category.trim() || 'General', status, description: description.trim() });
+  }
+
+  return createPortal(
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal finance-modal wide" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">Edit skill</h2>
+        <form onSubmit={handleSubmit} className="finance-modal-form horizontal">
+          <div className="field field-full">
+            <label>Name</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
+          </div>
+          <div className="field">
+            <label>Category</label>
+            <input type="text" placeholder="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Status</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value as SkillStatus)}>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div className="field field-full">
+            <label>Description</label>
+            <textarea rows={2} placeholder="Brief description…" value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+          <div className="modal-actions field-full">
+            <button type="button" className="modal-cancel" onClick={onClose}>Cancel</button>
+            <button type="submit" className="modal-submit">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body,
   );
 }
 

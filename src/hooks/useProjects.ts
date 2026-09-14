@@ -23,6 +23,17 @@ export function useCreateProject() {
   });
 }
 
+export function useDeleteProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => projectService.deleteProject(id),
+    onSuccess: (_, id) => {
+      queryClient.setQueryData(['projects'], (old: Project[] | undefined) => (old ? old.filter((p) => p.id !== id) : old));
+      queryClient.removeQueries({ queryKey: ['project', id] });
+    },
+  });
+}
+
 export function useCreateProjectFromTemplate() {
   const queryClient = useQueryClient();
   return useMutation({

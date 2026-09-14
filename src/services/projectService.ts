@@ -4,6 +4,7 @@ import type { Project, ProjectDraft, ProjectLinkCategory, ProjectStatus } from '
 export interface ProjectService {
   getProjects(): Promise<Project[]>;
   getProject(id: string): Promise<Project | null>;
+  deleteProject(id: string): Promise<void>;
   createProject(draft: ProjectDraft): Promise<Project>;
   createFromTemplate(templateId: string, name: string): Promise<Project>;
   updateBasicInfo(
